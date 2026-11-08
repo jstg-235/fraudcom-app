@@ -1,0 +1,102 @@
+name: Build Windows
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write    # the build is also pushed to a build/<version> branch
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 75
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Version
+        id: ver
+        run: |
+          $v = (Select-String -Path app.py -Pattern '^APP_VERSION = "(.+)"').Matches[0].Groups[1].Value
+          "ver=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "FraudCom $v"
+
+      # Clean-room copy in a neutral folder: PyInstaller embeds build paths,
+      # so nothing with a user or repo name may appear in them.
+      - name: Clean-room source
+        run: |
+          New-Item -ItemType Directory -Force C:\fcbuild\src | Out-Null
+          Copy-Item app.py, launcher.py, osclink.py, remote_api.py, FraudCom.spec, fraudcom.ico C:\fcbuild\src
+          Copy-Item static C:\fcbuild\src\static -Recurse
+
+      - name: Build environment (pinned)
+        run: |
+          python -m venv C:\fcbuild\venv
+          C:\fcbuild\venv\Scripts\python -m pip install --upgrade pip --quiet
+          C:\fcbuild\venv\Scripts\python -m pip install --no-cache-dir -r requirements-lock-windows.txt
+          C:\fcbuild\venv\Scripts\python -c "import vosk, faster_whisper, webview, sounddevice, rtmidi, PyInstaller; print('libraries OK')"
+
+      - name: Build
+        working-directory: C:\fcbuild\src
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: C:\fcbuild\venv\Scripts\pyinstaller --noconfirm --clean FraudCom.spec
+
+      - name: Strip build residue
+        run: |
+          Get-ChildItem C:\fcbuild\src\dist\FraudCom -Recurse -Directory -Filter __pycache__ |
+            Where-Object { $_.Parent.Name -like '*.dist-info' } | Remove-Item -Recurse -Force
+          (Get-ChildItem C:\fcbuild\src\dist\FraudCom -Recurse -File | Measure-Object -Sum Length).Sum / 1MB
+
+      - name: Anonymity gate
+        env:
+          ANON_NEEDLES: ${{ secrets.ANON_NEEDLES }}
+        run: C:\fcbuild\venv\Scripts\python ci\anon_scan.py C:\fcbuild\src\dist\FraudCom
+
+      # Tested on a COPY so nothing a run writes can reach the shipped tree.
+      - name: Frozen test (version, OSC, MIDI, Whisper, network trap)
+        run: |
+          New-Item -ItemType Directory -Force C:\fctest | Out-Null
+          Copy-Item C:\fcbuild\src\dist\FraudCom C:\fctest\app -Recurse
+          python ci\frozen_test.py C:\fctest\app ${{ steps.ver.outputs.ver }}
+
+      - name: Package UPDATE zip
+        run: |
+          $v = "${{ steps.ver.outputs.ver }}"
+          New-Item -ItemType Directory -Force C:\fcpkg | Out-Null
+          Copy-Item C:\fcbuild\src\dist\FraudCom C:\fcpkg\app -Recurse
+          (Get-Content ci\README-pc-update.txt -Raw).Replace('{VER}', $v) | Set-Content -NoNewline C:\fcpkg\README.txt
+          python -c "import os,sys,zipfile; r='C:/fcpkg'; z=zipfile.ZipFile(sys.argv[1],'w',zipfile.ZIP_DEFLATED,compresslevel=6); [z.write(os.path.join(d,f), os.path.relpath(os.path.join(d,f), r)) for d,_,fs in os.walk(r) for f in sorted(fs)]; z.close()" "C:\FraudCom-PC_v$v-UPDATE.zip"
+          python -c "import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); print(z.testzip() or 'zip OK', len(z.namelist()), 'files')" "C:\FraudCom-PC_v$v-UPDATE.zip"
+          Get-FileHash "C:\FraudCom-PC_v$v-UPDATE.zip" -Algorithm SHA256 | Format-List
+
+      # Also deliver the zip through git (some download paths can't reach
+      # GitHub's artifact storage): an orphan branch build/<version> holding
+      # the zip split into parts under GitHub's 100 MB file limit + sha256.
+      - name: Publish to build branch
+        run: |
+          $v = "${{ steps.ver.outputs.ver }}"
+          $zip = "C:\FraudCom-PC_v$v-UPDATE.zip"
+          New-Item -ItemType Directory -Force C:\fcout | Out-Null
+          Set-Location C:\fcout
+          git init -q -b "build/$v"
+          git config user.name "FraudCom"
+          git config user.email "fraudcom@users.noreply.github.com"
+          python -c "import sys; d=open(sys.argv[1],'rb').read(); n=90*1024*1024; [open(f'{sys.argv[2]}.part{i//n:02d}','wb').write(d[i:i+n]) for i in range(0,len(d),n)]" $zip "FraudCom-PC_v$v-UPDATE.zip"
+          (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower() + "  FraudCom-PC_v$v-UPDATE.zip" | Set-Content -NoNewline SHA256SUMS
+          git add -A
+          git commit -q -m "FraudCom $v Windows UPDATE build (run ${{ github.run_id }})"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" "build/${v}:build/${v}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FraudCom-PC_v${{ steps.ver.outputs.ver }}-UPDATE
+          path: C:\FraudCom-PC_v${{ steps.ver.outputs.ver }}-UPDATE.zip
+          retention-days: 7
+          compression-level: 0

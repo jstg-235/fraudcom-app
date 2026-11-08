@@ -1,0 +1,3198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudCom</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2314181d'/%3E%3Crect x='12' y='17' width='40' height='27' rx='8' fill='%231e242c'/%3E%3Cpath d='M19 42 L19 53 L30 43 Z' fill='%231e242c'/%3E%3Crect x='18' y='27' width='4' height='8' rx='2' fill='%2339c6ff'/%3E%3Crect x='24' y='23' width='4' height='15' rx='2' fill='%2339d98a'/%3E%3Crect x='30' y='20' width='4' height='21' rx='2' fill='%23f2e14c'/%3E%3Crect x='36' y='23' width='4' height='15' rx='2' fill='%2339d98a'/%3E%3Crect x='42' y='27' width='4' height='8' rx='2' fill='%2339c6ff'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#101418; --panel:#171c22; --panel-2:#1e242c; --line:#2a323c;
+    --text:#e8ecef; --dim:#8b96a1; --faint:#5a6570;
+    --ok:#39d98a; --warn:#ffb020; --danger:#ff5c5c; --hot:#f2e14c;
+    --okText:#062; --hotText:#f2e14c; --hotline:#5a531f;
+    --meterbg:#0b0e11; --selring:#fff; --onAccent:#06263a;
+    --avatarText:#10141a;
+    --c0:#ffb020; --c1:#39c6ff; --c2:#ff6ec7; --c3:#39d98a;
+    --c4:#b28bff; --c5:#ff8a3d; --c6:#5cd6d6; --c7:#f2e14c;
+    --c8:#8fd14f; --c9:#ff9db0; --c10:#7aa7ff; --c11:#d6b25c;
+    /* Bundled fonts (static/fonts, SIL OFL): the same letterforms and widths
+       on Windows and macOS, fully offline. System fonts are only fallbacks
+       for characters the bundled Latin set doesn't cover. */
+    --mono:'JetBrains Mono',ui-monospace,'Cascadia Code','SF Mono',Menlo,Consolas,monospace;
+    --sans:'Inter',system-ui,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    /* one type scale, one radius scale — use these, not raw px */
+    --t-xs:10.5px; --t-s:12px; --t-m:13px; --t-l:15px;
+    --r-s:6px; --r-m:8px; --r-l:12px; --r-pill:999px;
+  }
+  @font-face{font-family:'Inter';font-weight:100 900;font-display:block;
+    src:url('/static/fonts/Inter-var.woff2') format('woff2')}
+  @font-face{font-family:'JetBrains Mono';font-weight:100 800;font-display:block;
+    src:url('/static/fonts/JetBrainsMono-var.woff2') format('woff2')}
+  :root[data-theme="light"]{
+    --bg:#f2f4f7; --panel:#ffffff; --panel-2:#e9edf1; --line:#cdd5dd;
+    --text:#14181d; --dim:#4c5763; --faint:#7d8894;
+    --ok:#14824f; --warn:#b26a00; --danger:#c62828; --hot:#c7a600;
+    --okText:#fff; --hotText:#8a6d00; --hotline:#c7a600;
+    --meterbg:#dde3e9; --selring:#14181d; --onAccent:#fff;
+    --avatarText:#fff;
+    --c0:#b26a00; --c1:#0879b8; --c2:#b3368c; --c3:#14824f;
+    --c4:#6b46c1; --c5:#c05621; --c6:#0d7a7a; --c7:#8a6d00;
+    --c8:#4d7c0f; --c9:#c2415b; --c10:#4558c9; --c11:#9c7413;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{background:var(--bg);color:var(--text);font:var(--t-l)/1.5 var(--sans);
+       display:grid;grid-template-columns:348px 1fr;overflow:hidden}
+
+  /* ---------------- sidebar ---------------- */
+  aside{background:var(--panel);border-right:1px solid var(--line);
+        display:flex;flex-direction:column;min-height:0}
+  .brand{padding:14px 16px;border-bottom:1px solid var(--line);
+         display:flex;justify-content:space-between;align-items:center}
+  .brand h1{font:600 var(--t-m)/1.2 var(--mono);letter-spacing:.12em;
+            text-transform:uppercase;color:var(--dim);
+            display:flex;align-items:center;gap:8px}
+  .brand h1 b{color:var(--text)}
+  .brand .com{color:var(--c1)}
+  .brand .acts{display:flex;gap:5px}
+  .ver{font:500 var(--t-xs) var(--mono);color:var(--faint);letter-spacing:.05em;
+       text-transform:none}
+  .faint{color:var(--faint)}
+  .mono-xs{font:var(--t-xs) var(--mono)}
+  .mt-s{margin-top:6px} .mt-m{margin-top:10px} .mt-l{margin-top:22px}
+
+  /* UI icons (drawn in-page so Windows and macOS show the same shapes) */
+  svg.ui{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;
+         stroke-linecap:round;stroke-linejoin:round;vertical-align:-.22em;flex:none}
+  svg.ui .f{fill:currentColor;stroke:none}
+  .scroll{flex:1;overflow-y:auto;min-height:0}
+  section{border-bottom:1px solid var(--line);padding:12px 14px}
+  section h2{font:600 var(--t-xs)/1 var(--mono);letter-spacing:.1em;
+             text-transform:uppercase;color:var(--faint);margin-bottom:8px;
+             display:flex;justify-content:space-between;align-items:center}
+  select,input[type=text],textarea{width:100%;background:var(--panel-2);
+      color:var(--text);border:1px solid var(--line);border-radius:var(--r-s);
+      padding:6px 8px;font:var(--t-m) var(--sans)}
+  textarea{font:var(--t-s) var(--mono);resize:vertical}
+  select:focus,input:focus,textarea:focus,button:focus-visible{
+      outline:2px solid var(--c1);outline-offset:1px}
+  button{cursor:pointer;border:0;border-radius:var(--r-s);font:600 var(--t-m) var(--sans)}
+  .btn{background:var(--panel-2);color:var(--dim);border:1px solid var(--line);
+       padding:6px 10px;display:inline-flex;align-items:center;
+       justify-content:center;gap:5px}
+  .btn:hover{color:var(--text)}
+
+  .controls{padding:12px 14px;border-top:1px solid var(--line)}
+  #startBtn{width:100%;background:var(--ok);color:var(--okText);padding:10px;font-size:var(--t-l)}
+  #startBtn.on{background:var(--danger);color:#fff}
+  #errBadge{background:transparent;border:1px solid var(--danger);
+            color:var(--danger);border-radius:var(--r-l);padding:2px 10px;
+            font:700 var(--t-s) var(--mono);cursor:pointer;margin-bottom:10px}
+  #errBadge:hover{background:var(--danger);color:#fff}
+  #errBadge[hidden]{display:none}
+  .toast.err{border-left-color:var(--danger)}
+  .errline{padding:5px 6px;font:var(--t-m) var(--sans);border-bottom:1px solid var(--line)}
+  .errline small{color:var(--faint);font:var(--t-xs) var(--mono);margin-right:7px}
+  label.opt{display:flex;gap:7px;align-items:center;font:var(--t-m) var(--sans);
+            color:var(--dim);margin-top:9px;cursor:pointer}
+
+  .meter{width:40px;height:7px;background:var(--meterbg);border-radius:var(--r-s);
+         overflow:hidden;border:1px solid var(--line)}
+  .meter i{display:block;height:100%;width:0%;
+           background:linear-gradient(90deg,var(--ok) 60%,var(--warn) 82%,var(--danger));
+           transition:width .09s linear}
+  .solo,.mute{width:20px;height:20px;border-radius:50%;background:transparent;
+        border:1.5px solid var(--line);color:var(--faint);font:700 var(--t-xs) var(--mono);
+        padding:0;line-height:1;flex:none}
+  .solo:hover,.mute:hover{border-color:var(--text);color:var(--text)}
+  .mute.on{background:var(--danger);border-color:var(--danger);color:#fff}
+  .inputrow.muted .info{opacity:.45}
+  .heard:not(:empty)::after{content:' · '}
+
+  /* ---------------- inputs list ---------------- */
+  .inputrow{display:flex;gap:6px;align-items:center;border:1px solid var(--line);
+            border-radius:var(--r-m);padding:7px 9px;margin-bottom:6px;
+            background:var(--panel-2)}
+  .inputrow .drag{color:var(--faint);cursor:grab;font-size:var(--t-m);
+                  line-height:1;user-select:none;flex:none;margin-right:-2px}
+  .inputrow.dragging{opacity:.4}
+  .inputrow.dragover{border-color:var(--c1);
+                     box-shadow:0 -2px 0 var(--c1) inset}
+  .pcolor{width:13px;height:13px;border-radius:50%;
+          border:1px solid rgba(255,255,255,.25);flex:none}
+  .inputrow .info{flex:1;min-width:0}
+  .inputrow .nm{font-weight:600;font-size:var(--t-m);overflow:hidden;
+                text-overflow:ellipsis;white-space:nowrap}
+  .inputrow .rt{font:var(--t-xs) var(--mono);color:var(--dim);overflow:hidden;
+                text-overflow:ellipsis;white-space:nowrap}
+  .inputrow .rt.warn{color:var(--warn)}
+  .inputrow .meter{width:34px;flex:none}
+  .iedit{background:none;color:var(--faint);font-size:var(--t-m);padding:0 2px}
+  .iedit:hover{color:var(--text)}
+  .pdel{background:none;color:var(--faint);font-size:16px;padding:0 2px;
+        line-height:1;width:20px}
+  .pdel:hover{color:var(--danger)}
+  .hint{font:var(--t-s) var(--sans);color:var(--faint);padding:2px 2px 6px;
+        line-height:1.55}
+
+  /* ---------------- modal ---------------- */
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;
+         place-items:center;z-index:100}
+  #modal[hidden]{display:none}
+  .mbox{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-l);
+        padding:18px;width:min(420px,92vw);box-shadow:0 12px 40px rgba(0,0,0,.6)}
+  .mbox h3{font:600 var(--t-s) var(--mono);letter-spacing:.1em;
+           text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+  .mfield{margin-bottom:11px}
+  .mfield label{display:block;font:var(--t-xs) var(--mono);color:var(--faint);
+                margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
+  .mlist{max-height:220px;overflow-y:auto;border:1px solid var(--line);
+         border-radius:var(--r-s);padding:5px;background:var(--panel-2)}
+  .mlist label{display:flex;gap:8px;align-items:center;padding:5px 6px;
+               font:var(--t-m) var(--sans);cursor:pointer;border-radius:var(--r-s);
+               text-transform:none;letter-spacing:normal;color:var(--text);margin:0}
+  .mlist label:hover{background:var(--panel)}
+  .mlist input[type=checkbox]{width:14px;height:14px;accent-color:var(--ok)}
+  .inputrow.down{border-color:var(--danger);
+                 box-shadow:0 0 0 1px var(--danger) inset}
+  .meter[data-gate="open"]{border-color:var(--ok)}
+  .meter[data-gate="closed"] i{opacity:.35}
+  .autorow{display:flex;gap:8px;align-items:center;border:1px solid var(--line);
+           border-radius:var(--r-m);padding:7px 9px;margin-bottom:6px;
+           background:var(--panel-2)}
+  .autorow .info{flex:1;min-width:0}
+  .autorow b{font-size:var(--t-m)}
+  .autorow small{display:block;font:var(--t-xs) var(--mono);color:var(--dim);
+                 overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .autorow input[type=checkbox]{width:15px;height:15px;
+                                accent-color:var(--ok);flex:none}
+  .swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .sw{width:22px;height:22px;border-radius:50%;border:2px solid transparent;
+      padding:0;cursor:pointer}
+  .sw.sel{border-color:var(--selring)}
+  .swcustom{width:22px;height:22px;border-radius:50%;position:relative;
+            border:2px dashed var(--faint);display:grid;place-items:center;
+            cursor:pointer;color:var(--dim);font:600 var(--t-m)/1 var(--sans);
+            overflow:hidden}
+  .swcustom.sel{border-style:solid;border-color:var(--selring)}
+  .swcustom input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .icosw{width:30px;height:30px;border-radius:var(--r-m);border:2px solid transparent;
+         background:var(--panel-2);font-size:16px;line-height:1;padding:0;
+         cursor:pointer;display:grid;place-items:center;color:var(--dim)}
+  .icosw:hover{border-color:var(--faint)}
+  .icosw.sel{border-color:var(--selring)}
+  svg.ico{fill:currentColor;vertical-align:-2px;flex:none}
+  .avatar .emj{font-size:19px}
+  .mrow{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+  .mrow .primary{background:var(--ok);color:var(--okText);padding:7px 16px}
+  .mnote{font:var(--t-s) var(--sans);color:var(--faint);line-height:1.5}
+  .mnote.lg{font-size:var(--t-m)}
+  #mBody [hidden]{display:none !important}   /* beats inline display:flex */
+  .mnote code{font:var(--t-xs) var(--mono);color:var(--text)}
+
+  /* ---------------- presets ---------------- */
+  .presetrow{display:flex;gap:6px;margin-top:8px}
+  .presetrow .btn{flex:1}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-m);
+       overflow:hidden;flex:none}
+  .seg button{background:var(--panel-2);color:var(--dim);border:0;
+              padding:6px 14px;font:var(--t-m) var(--sans);cursor:pointer}
+  .seg button+button{border-left:1px solid var(--line)}
+  .seg button.on{background:var(--text);color:var(--bg);font-weight:600}
+  .clentry b{font-size:var(--t-m)}
+  .clentry ul{margin:4px 0 12px 18px;font-size:var(--t-m);color:var(--dim);
+              line-height:1.55}
+  .clentry li{margin:2px 0}
+
+  .chiplist{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{display:inline-flex;gap:5px;align-items:center;background:var(--panel-2);
+        border:1px solid var(--line);border-radius:var(--r-pill);padding:2px 8px;
+        font:var(--t-s) var(--sans);color:var(--dim)}
+  .chip button{background:none;color:var(--faint);font-size:var(--t-m);padding:0}
+  .chip button:hover{color:var(--danger)}
+  .chip .cname{color:inherit;font:inherit}
+  .chip .cname:hover{color:var(--text)}
+  .chip.hw{border-color:var(--hotline);color:var(--hotText)}
+
+  /* ---------------- main ---------------- */
+  main{display:flex;flex-direction:column;min-height:0;position:relative}
+
+  /* ---------------- preferences page ---------------- */
+  #prefs{position:absolute;inset:0;background:var(--bg);z-index:30;
+         overflow-y:auto}
+  #prefs[hidden]{display:none}
+  .pwrap{max-width:760px;margin:0 auto;padding:22px 24px 60px}
+  .phead{display:flex;justify-content:space-between;align-items:center;
+         margin-bottom:16px}
+  .phead h2{font:600 var(--t-m) var(--mono);letter-spacing:.14em;
+            text-transform:uppercase}
+  .pbody{display:flex;gap:18px;align-items:flex-start}
+  .pnav{flex:none;width:150px;display:flex;flex-direction:column;gap:1px;
+        position:sticky;top:0}
+  .pnav button{text-align:left;background:transparent;border:0;
+        border-left:2px solid transparent;color:var(--dim);
+        padding:8px 12px;font:var(--t-m) var(--sans);cursor:pointer;border-radius:0}
+  .pnav button:hover{color:var(--text)}
+  .pnav button.on{color:var(--text);background:var(--panel-2);
+        border-left-color:var(--c1)}
+  .ppanes{flex:1;min-width:0}
+  .pane{display:none}
+  .pane.active{display:block}
+  @media (max-width:700px){
+    .pbody{flex-direction:column}
+    .pnav{flex-direction:row;flex-wrap:wrap;width:100%;position:static}
+    .pnav button{border-left:0;border-bottom:2px solid transparent}
+    .pnav button.on{border-left:0;border-bottom-color:var(--c1)}
+  }
+  .prefcard{background:var(--panel);border:1px solid var(--line);
+            border-radius:var(--r-l);padding:14px 18px;margin-bottom:12px}
+  .prefcard h3{font:600 var(--t-xs) var(--mono);letter-spacing:.1em;
+               text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .prefrow{display:flex;justify-content:space-between;gap:16px;
+           align-items:center;padding:10px 0;cursor:pointer}
+  .prefrow+.prefrow{border-top:1px solid var(--line)}
+  .prefrow.static{cursor:default}
+  .prefrow b{font-size:var(--t-m);font-weight:600}
+  .prefrow small,.pnote{display:block;font-size:var(--t-s);color:var(--dim);
+                        line-height:1.45;margin-top:2px}
+  .rosterbk{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+  .bkrow{display:flex;align-items:center;gap:10px;padding:8px 10px;
+         background:var(--panel-2);border:1px solid var(--line);
+         border-radius:var(--r-m)}
+  .bkinfo{flex:1;min-width:0}
+  .bkinfo b{font-size:var(--t-m)}
+  .bkinfo small{display:block;font-size:var(--t-s);color:var(--dim);
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bkrow .btn{flex:none}
+  .prefrow input[type=checkbox]{width:17px;height:17px;
+                                accent-color:var(--ok);flex:none}
+  .prefrow select{width:130px;flex:none}
+  .plabel{display:block;font:var(--t-xs) var(--mono);color:var(--faint);
+          text-transform:uppercase;letter-spacing:.07em;margin:12px 0 5px}
+  .prefcard h3+.plabel{margin-top:4px}
+  .rowsplit{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .aboutname{font-size:var(--t-m);margin-bottom:2px}
+  .phead .ver{margin-left:8px}
+  .oscref summary{cursor:pointer;color:var(--dim);font-size:var(--t-s);margin:6px 0}
+  .oscref summary:hover{color:var(--text)}
+  .oscref table{width:100%;border-collapse:collapse;font-size:var(--t-s);margin:4px 0 8px}
+  .oscref td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:top;color:var(--dim)}
+  .oscref td:first-child{font:var(--t-xs) var(--mono);color:var(--text);width:46%}
+  .pnote code{font:var(--t-xs) var(--mono);color:var(--text)}
+  .sharelink{display:flex;gap:8px;align-items:center;margin:10px 0 8px}
+  .sharelink code{background:var(--panel-2);border:1px solid var(--line);
+                  border-radius:var(--r-s);padding:6px 10px;font:var(--t-m) var(--mono);
+                  flex:1;overflow-wrap:anywhere}
+  #shareQr{background:#fff;border-radius:var(--r-m);padding:8px;display:block;
+           margin:4px 0 8px;width:150px;height:150px}
+  .bar{display:flex;align-items:center;gap:10px;padding:10px 18px 0;
+       background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--faint);flex:none}
+  .dot.live{background:var(--danger);box-shadow:0 0 8px var(--danger);
+            animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{opacity:.45}}
+  .bar .status{font:600 var(--t-s) var(--mono);letter-spacing:.08em;color:var(--dim);
+       padding-bottom:10px}
+  .bar .spacer{flex:1}
+  .bar .actions{display:flex;gap:6px;padding-bottom:10px;align-items:center}
+  #health{font:var(--t-xs) var(--mono);color:var(--faint);padding-bottom:10px;
+          cursor:help}
+  #health.warn{color:var(--warn)}
+  #health[hidden]{display:none}
+  .menu{position:relative}
+  .menu>summary{list-style:none}
+  .menu>summary::-webkit-details-marker{display:none}
+  .menupop{position:absolute;right:0;top:calc(100% + 4px);z-index:40;
+           min-width:220px;background:var(--panel);border:1px solid var(--line);
+           border-radius:var(--r-m);padding:4px;display:flex;flex-direction:column;
+           box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .menupop button{background:none;color:var(--text);text-align:left;
+           padding:7px 10px;font-weight:500;display:flex;gap:9px;align-items:center}
+  .menupop button:hover{background:var(--panel-2)}
+  .menupop button .k{margin-left:auto;color:var(--faint);font:var(--t-xs) var(--mono)}
+  .menupop hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+  #tabs{display:flex;gap:2px;width:100%;overflow-x:auto}
+  .tab{background:transparent;color:var(--dim);padding:8px 14px;
+       border-radius:8px 8px 0 0;border:1px solid transparent;border-bottom:0;
+       font-weight:600;display:flex;gap:7px;align-items:center;white-space:nowrap}
+  .tab.active{background:var(--bg);border-color:var(--line);color:var(--text)}
+  .tab[draggable]{cursor:grab}
+  .tab.dragging{opacity:.4}
+  .tab.dragover{box-shadow:-2px 0 0 var(--c1) inset}
+  .tab .pin{color:var(--faint);font-size:var(--t-xs);cursor:pointer;padding:0 1px}
+  .tab .pin.on{color:var(--hot)}
+  .tab .pin.on svg.ui path{fill:currentColor}
+  .tab .pin:hover{color:var(--text)}
+  .tab .badge{background:var(--danger);color:#fff;font:700 var(--t-xs) var(--mono);
+       border-radius:var(--r-pill);padding:1px 6px;display:none}
+  .tab .badge.show{display:inline-block;animation:pulse 1.4s infinite}
+  .tab .x{color:var(--faint);font-size:var(--t-s);margin-left:2px}
+
+  #feed{--zoom:1;flex:1;overflow-y:auto;padding:20px 24px;scroll-behavior:smooth}
+  .msg{display:flex;gap:calc(12px*var(--zoom));margin-bottom:calc(14px*var(--zoom));
+       max-width:calc(860px*var(--zoom))}
+  .avatar{flex:none;width:calc(30px*var(--zoom));height:calc(30px*var(--zoom));
+          border-radius:var(--r-m);cursor:pointer;
+          display:grid;place-items:center;font:700 calc(11px*var(--zoom)) var(--mono);
+          color:#10141a}
+  .msg .body{min-width:0}
+  .meta{display:flex;gap:10px;align-items:baseline;margin-bottom:2px}
+  .meta .who{font-weight:600;font-size:calc(11px*var(--zoom));cursor:pointer;
+             opacity:.8;text-transform:uppercase;letter-spacing:.04em}
+  .meta .who:hover{text-decoration:underline;opacity:1}
+  .meta .when{font:calc(10px*var(--zoom)) var(--mono);color:var(--faint)}
+  .bubble{background:var(--panel-2);border:1px solid var(--line);
+          border-radius:4px 12px 12px 12px;
+          padding:calc(8px*var(--zoom)) calc(12px*var(--zoom));
+          font-size:calc(17px*var(--zoom));line-height:1.45;color:var(--text);
+          overflow-wrap:anywhere}
+  .bubble p+p{margin-top:calc(6px*var(--zoom))}
+  .bubble mark{background:transparent;color:var(--hotText);font-weight:700;
+          border-bottom:2px solid var(--hot)}
+  .msg.hashot .bubble{border-color:var(--hotline);
+          box-shadow:0 0 0 1px var(--hotline) inset}
+  .msg.partial .bubble{color:var(--dim);font-style:italic;border-style:dashed}
+  .msg.partial .bubble::after{content:'';display:inline-block;width:.4em;
+          height:1em;margin-left:3px;vertical-align:-.12em;
+          background:var(--faint);animation:pulse 1s infinite}
+  .avatar.noteav{background:var(--dim);color:var(--panel)}
+  .avatar svg.ui{width:58%;height:58%;vertical-align:0}
+  #empty{color:var(--faint);font:var(--t-m) var(--mono);text-align:center;
+         margin-top:12vh;letter-spacing:.05em;line-height:2}
+
+  /* toasts */
+  #toasts{position:fixed;right:16px;bottom:16px;display:flex;
+          flex-direction:column;gap:8px;z-index:50;max-width:340px}
+  .toast{background:var(--panel-2);border:1px solid var(--line);
+         border-left:4px solid var(--danger);border-radius:var(--r-m);padding:10px 12px;
+         cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.5);
+         animation:slidein .18s ease-out}
+  .toast.hot{border-left-color:var(--hot)}
+  .toast.auto{border-left-color:var(--c1);cursor:default}
+  .toast.ok{border-left-color:var(--ok)}
+  .toast .t1 svg.ui{color:var(--danger)}
+  .toast.hot .t1 svg.ui{color:var(--hot)}
+  .toast.auto .t1 svg.ui{color:var(--c1)}
+  .toast.ok .t1 svg.ui{color:var(--ok)}
+  .toast .t1{font:600 var(--t-s) var(--sans)}
+  .toast .t2{font:var(--t-m) var(--sans);color:var(--dim);margin-top:2px;
+             display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+             overflow:hidden}
+  @keyframes slidein{from{transform:translateX(30px);opacity:0}}
+
+  /* full-screen flash alert (voice automation) */
+  #flash{position:fixed;inset:0;z-index:200;display:flex;align-items:center;
+         justify-content:center;pointer-events:none;
+         animation:flashpulse .45s steps(1) infinite}
+  #flash[hidden]{display:none}
+  #flash b{font:800 min(11vw,120px)/1.05 var(--sans);color:#fff;
+           text-align:center;padding:0 5vw;text-transform:uppercase;
+           text-shadow:0 2px 12px rgba(0,0,0,.4)}
+  @keyframes flashpulse{50%{opacity:.12}}
+  @media (prefers-reduced-motion: reduce){ #flash{animation:none} }
+
+  /* notes, translation marker, jump-to-latest */
+  .msg.note .bubble{background:transparent;border:1px dashed var(--line);
+                    color:var(--dim);font-style:italic;font-size:var(--t-m)}
+  /* notes (and markers) sit on the right side of the feed so they stand out */
+  .msg.note{flex-direction:row-reverse}
+  .msg.note .body{display:flex;flex-direction:column;align-items:flex-end;
+                  text-align:right;margin-left:auto}
+  .msg.note .meta{justify-content:flex-end}
+  .xlate{font-style:normal;opacity:.8;margin-right:2px}
+  #jumpBtn{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;
+           z-index:20;background:var(--c1);color:var(--onAccent);border:0;
+           border-radius:var(--r-pill);padding:7px 16px;font:600 var(--t-m) var(--sans);
+           cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.5)}
+  #jumpBtn[hidden]{display:none}
+  #jumpBtn .jb{background:var(--danger);color:#fff;border-radius:var(--r-pill);
+               padding:0 6px;margin-left:6px;font:700 var(--t-xs) var(--mono)}
+
+  /* sidebar hidden: the feed takes the full width; the sidebar's top bar
+     (name, hide/show, rescan, preferences) and Start stay, as a strip
+     across the top of the window */
+  body.sidecollapsed{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  body.sidecollapsed aside{flex-direction:row;align-items:center;border-right:0;
+                           border-bottom:1px solid var(--line)}
+  body.sidecollapsed aside .brand{flex:1;border-bottom:0;padding:8px 14px}
+  body.sidecollapsed aside .scroll{display:none}
+  body.sidecollapsed aside .controls{border-top:0;padding:6px 14px 6px 0}
+  body.sidecollapsed aside .controls .opt{display:none}
+  body.sidecollapsed #startBtn{width:auto;padding:6px 16px;font-size:var(--t-m)}
+  body.sidecollapsed #sideBtn{color:var(--c1);border-color:var(--c1)}
+
+  /* viewer mode (opened from another device on the LAN) */
+  body.viewer{grid-template-columns:1fr}
+  body.viewer aside{display:none}
+  #viewerBadge{display:none;font:600 var(--t-xs) var(--mono);color:var(--warn);
+               border:1px solid var(--warn);border-radius:var(--r-s);padding:2px 6px;
+               letter-spacing:.08em;margin-bottom:10px}
+  body.viewer #viewerBadge{display:inline-block}
+  body.viewer #noteBtn, body.viewer [data-op]{display:none}
+  #search{width:170px}
+
+  /* feed text-size (zoom) control */
+  .zoomctl{display:flex;align-items:center;gap:2px}
+  #zoomPct{background:none;color:var(--faint);font:var(--t-s) var(--mono);
+           width:44px;text-align:center;padding:0}
+  #zoomPct:hover{color:var(--text)}
+
+  @media (max-width:820px){
+    body{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+    aside{max-height:48vh}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .dot.live,.msg.partial .bubble::after,.tab .badge.show{animation:none}
+    #feed{scroll-behavior:auto}
+    .toast{animation:none}
+  }
+</style>
+</head>
+<body>
+
+<aside>
+  <div class="brand">
+    <h1>
+      <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1e242c"/><rect x="12" y="17" width="40" height="27" rx="8" fill="#2a323c"/><path d="M19 42 L19 53 L30 43 Z" fill="#2a323c"/><rect x="18" y="27" width="4" height="8" rx="2" fill="#39c6ff"/><rect x="24" y="23" width="4" height="15" rx="2" fill="#39d98a"/><rect x="30" y="20" width="4" height="21" rx="2" fill="#f2e14c"/><rect x="36" y="23" width="4" height="15" rx="2" fill="#39d98a"/><rect x="42" y="27" width="4" height="8" rx="2" fill="#39c6ff"/></svg>
+      <span><b>FRAUD</b><span class="com">COM</span>
+        <span id="brandVer" class="ver"></span></span>
+    </h1>
+    <div class="acts">
+      <button class="btn" id="sideBtn" data-ico="panel" aria-pressed="false"
+              title="Hide inputs &amp; groups (\)" aria-label="Hide inputs and groups"></button>
+      <button class="btn" id="refreshBtn" data-ico="refresh"
+              title="Rescan audio devices" aria-label="Rescan audio devices"></button>
+      <button class="btn" id="prefsBtn" data-ico="sliders"
+              title="Preferences" aria-label="Preferences"></button>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <section>
+      <h2>Inputs <button class="btn" id="addInput">+ Add input</button></h2>
+      <div id="inputList"></div>
+      <div id="noInputs" class="hint">No inputs yet. Click <b>+ Add input</b>
+        to name an input and choose its driver &amp; channel
+        (e.g. <i>John — DVS ch 43</i>).</div>
+    </section>
+
+    <section>
+      <h2>Groups <button class="btn" id="addGroupBtn">+ Add group</button></h2>
+      <div class="chiplist" id="groupChips"></div>
+      <div id="noGroups" class="hint">Groups become tabs in the feed.
+        Click a group's name to edit its members.</div>
+    </section>
+
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">Start listening</button>
+    <label class="opt"><input type="checkbox" id="soundAlerts" checked>
+      Chime on off-tab activity</label>
+  </div>
+</aside>
+
+<main>
+  <div class="bar">
+    <div class="dot" id="statusDot"></div><span class="status" id="statusText">IDLE</span>
+    <span id="viewerBadge">VIEWER</span>
+    <button id="errBadge" hidden data-ico="warn"
+            title="Errors — click to view and clear"> <span id="errCount"></span></button>
+    <span id="health" hidden
+          title="CPU: share of this computer FraudCom is using.&#10;Lag: audio still waiting to be transcribed on the busiest channel.&#10;Whisper: lines waiting for the accuracy pass."></span>
+    <div class="spacer"></div>
+    <div class="actions">
+      <div class="zoomctl" title="Text size — Ctrl+scroll (or pinch) on the feed also works">
+        <button class="btn" id="zoomOut" aria-label="Smaller text">A−</button>
+        <button id="zoomPct" title="Reset text size">100%</button>
+        <button class="btn" id="zoomIn" aria-label="Larger text">A+</button>
+      </div>
+      <input type="text" id="search" placeholder="Search…" aria-label="Search transcript">
+      <button class="btn" id="noteBtn" data-ico="pencil"
+              title="Add a note to the transcript (N)">Note</button>
+      <details class="menu" id="moreMenu">
+        <summary class="btn" data-ico="more" title="More" aria-label="More"></summary>
+        <div class="menupop">
+          <button id="markBtn" data-op data-ico="flag">Drop a marker<span class="k">M</span></button>
+          <button id="dlBtn" data-ico="download">Download transcript</button>
+          <button id="openTx2" data-op data-ico="folder">Open transcripts folder</button>
+          <hr>
+          <button id="clearBtn" data-ico="trash">Clear the feed…</button>
+        </div>
+      </details>
+    </div>
+    <div id="tabs"></div>
+  </div>
+  <div id="feed">
+    <div id="empty">Add inputs, group them if you like — or load a preset —<br>
+      then press Start.</div>
+  </div>
+  <button id="jumpBtn" hidden></button>
+  <div id="flash" hidden><b></b></div>
+  <div id="toasts"></div>
+
+  <div id="prefs" hidden>
+    <div class="pwrap">
+      <div class="phead">
+        <h2>Preferences <span id="verTag" class="ver"></span></h2>
+        <button class="btn" id="prefsClose" data-ico="x">Close</button>
+      </div>
+
+      <div class="pbody">
+        <nav class="pnav" id="pnav">
+          <button data-pane="appearance" class="on">Appearance</button>
+          <button data-pane="listening">Listening</button>
+          <button data-pane="presets">Presets</button>
+          <button data-pane="feed">Feed</button>
+          <button data-pane="sharing">Web sharing</button>
+          <button data-pane="automation">Automation</button>
+          <button data-pane="api">Remote API</button>
+          <button data-pane="speech">Speech</button>
+          <button data-pane="devices">Devices</button>
+          <button data-pane="about">About</button>
+        </nav>
+        <div class="ppanes">
+
+      <div class="prefcard pane active" data-pane="appearance"><h3>Appearance</h3>
+        <label class="prefrow static"><span><b>Theme</b>
+            <small>System follows your computer's light/dark setting
+              automatically — light is easier to read in daylight.</small></span>
+          <div class="seg" id="themeSeg">
+            <button type="button" data-t="system">System</button>
+            <button type="button" data-t="light">Light</button>
+            <button type="button" data-t="dark">Dark</button>
+          </div></label>
+      </div>
+
+      <div class="prefcard pane" data-pane="listening"><h3>Listening</h3>
+        <label class="prefrow"><span><b>Auto-start on launch</b>
+            <small>Load the last used preset and start listening the moment
+              the app opens — zero clicks on show day.</small></span>
+          <input type="checkbox" id="autoStart"></label>
+        <label class="prefrow"><span><b>Whisper refinement</b>
+            <small id="refineNote">A few seconds after each line appears, a
+              local AI model re-transcribes it and upgrades the text — feed
+              and saved transcript. No internet used.</small></span>
+          <input type="checkbox" id="refineChk"></label>
+      </div>
+
+      <div class="prefcard pane" data-pane="presets"><h3>Presets</h3>
+        <small class="pnote">A preset saves your inputs, groups, colors, and
+          hot words — one per event. The last one you use auto-loads on
+          launch.</small>
+        <div class="presetrow mt-m">
+          <select id="presetSel" aria-label="Saved presets" style="flex:2"></select>
+          <button class="btn" id="presetLoad">Load</button>
+          <button class="btn" id="presetSave">Save…</button>
+          <button class="btn" id="presetDel">Delete</button>
+        </div>
+        <h3 class="mt-l">Setup templates</h3>
+        <small class="pnote">Move a whole setup between computers: inputs,
+          groups, colors, hot words, corrections and (optionally) automations.
+          Import also reads <b>.pcconfig</b> show files. Inputs are matched to
+          the audio devices on this computer by name.</small>
+        <div class="presetrow mt-m">
+          <button class="btn" id="tplImport">Import template…</button>
+          <button class="btn" id="tplExport">Export template…</button>
+          <!-- no accept= filter: on a Mac the app window maps it to Apple file
+               types, and .pcconfig / .fctemplate aren't ones macOS knows, so
+               they were greyed out. Any file can be picked; the server checks
+               what it is and says so if it isn't a template. -->
+          <input type="file" id="tplFile" hidden>
+        </div>
+        <h3 class="mt-l">Roster backups</h3>
+        <small class="pnote">Your inputs and groups are auto-saved to disk on
+          every change, with a running history. If a roster ever disappears,
+          restore it here.</small>
+        <div id="rosterBackups" class="rosterbk"></div>
+      </div>
+
+      <div class="prefcard pane" data-pane="feed"><h3>Feed</h3>
+        <label class="prefrow"><span><b>Clear chats after</b>
+            <small>Messages older than this disappear from the screen —
+              except unread ones on tabs you haven't opened, which stay
+              until you've seen them.</small></span>
+          <select id="retentionSel">
+            <option value="0">Never</option>
+            <option value="15">15 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="240">4 hours</option>
+          </select></label>
+        <label class="prefrow"><span><b>Auto-save transcript to disk</b>
+            <small>Appends every line to a dated file in the transcripts
+              folder — the crash-proof record if the app or PC dies
+              mid-show. Costs nothing measurable; off means the feed is
+              the only copy.</small></span>
+          <input type="checkbox" id="autosaveChk"></label>
+        <div class="presetrow mt-s">
+          <button class="btn" id="openTx" data-ico="folder">Open transcripts folder</button>
+        </div>
+        <small class="pnote mt-m">Shortcuts:
+          <b>Space</b> start/stop · <b>N</b> note · <b>M</b> marker ·
+          <b>1–9</b> switch tab · <b>J</b> jump to latest · <b>\</b> hide/show inputs ·
+          <b class="modkey">Ctrl</b><b>+,</b> preferences · <b>Esc</b> close.</small>
+      </div>
+
+      <div class="prefcard pane" data-pane="sharing"><h3>Web sharing</h3>
+        <label class="prefrow"><span><b>Enable web sharing</b>
+            <small>People on this network can open the feed in their browser
+              — they can watch, switch tabs, solo, and search, but can't
+              change anything.</small></span>
+          <input type="checkbox" id="shareChk"></label>
+        <div id="shareInfo" hidden>
+          <label class="prefrow static"><span><b>Link opens</b>
+              <small>Pick a group to make a link that shows only that
+                group's channels — e.g. a stage manager's tablet.</small></span>
+            <select id="shareTab"></select></label>
+          <div class="sharelink"><code id="shareUrl"></code>
+            <button class="btn" id="copyUrl">Copy</button></div>
+          <img id="shareQr" src="/qr.svg" alt="QR code for the sharing link">
+          <small class="pnote">Scan the code or open the link on any device
+            on this network. If it won't connect, check that this computer's
+            firewall allows FraudCom.</small>
+        </div>
+      </div>
+
+      <div class="prefcard pane" data-pane="automation"><h3>Automations</h3>
+        <small class="pnote">When a phrase is heard on a channel — or an OSC
+          message arrives — send an OSC cue (UDP or TCP) to lighting desks,
+          media servers or QLab, switch things on a Yamaha RIVAGE or DiGiCo
+          console, send MIDI, or flash a message on screen. E.g. say
+          “black out” and fire a cue.</small>
+        <div id="autoList" class="mt-m"></div>
+        <div class="presetrow mt-s">
+          <button class="btn" id="autoAdd">+ Add automation</button>
+        </div>
+        <h3 class="mt-l">OSC input (show control)</h3>
+        <label class="prefrow"><span><b>Receive OSC</b>
+            <small>Let a console, QLab or a show controller drop markers
+              into the transcript and mute channels. Anything on the network
+              that can reach this port can send these, so leave it off unless
+              you use it.</small></span>
+          <input type="checkbox" id="oscRxChk"></label>
+        <label class="prefrow static"><span><b>Port</b>
+            <small id="oscRxNote">Send to this computer's address on this
+              port.</small></span>
+          <input type="text" id="oscRxPort" inputmode="numeric"
+                 style="width:90px;flex:none"></label>
+        <label class="prefrow static"><span><b>Transport</b>
+            <small>TCP uses SLIP framing (OSC 1.1), as QLab does.</small></span>
+          <select id="oscRxProto">
+            <option value="both">UDP + TCP</option>
+            <option value="udp">UDP</option>
+            <option value="tcp">TCP</option>
+          </select></label>
+        <small class="pnote">Commands are addressed <code>/fraudcom/…</code>
+          (see the reference below). Point cues at this computer and port. Automatic uses
+          9000; if another app already holds 9000, FraudCom takes 9765 and shows
+          it here.</small>
+        <details class="oscref mt-s"><summary>Command reference</summary>
+          <table>
+            <tr><td>ping · version</td><td>replies <code>…/pong</code> · <code>…/version/reply</code> (the version)</td></tr>
+            <tr><td>channel/count · channel/list</td><td>replies at the same address + <code>/reply</code>: the count, or one reply per channel (number, slug, name)</td></tr>
+            <tr><td>channel/<i>ch</i>/name</td><td>replies (slug, name)</td></tr>
+            <tr><td>channel/next · channel/previous · channel/<i>ch</i>/select</td><td>shows that channel on its own</td></tr>
+            <tr><td>channel/<i>ch</i>/send <i>text</i></td><td>adds a line from that channel</td></tr>
+            <tr><td>channel/<i>ch</i>/clear · …/mark</td><td>clears its lines · marks them read</td></tr>
+            <tr><td>scroll/up · down · current</td><td>scrolls the feed</td></tr>
+            <tr><td>font/increase · decrease</td><td>text size</td></tr>
+            <tr><td>window/show · hide</td><td>shows or hides the window</td></tr>
+            <tr><td>flash <i>text</i> [seconds] [repeats] [color]</td><td>full-screen message; color is a name (red, amber, green, cyan, blue, purple, magenta, pink, orange, yellow, lime, teal, white, gray, black) or #rrggbb</td></tr>
+            <tr><td>automation/trigger <i>name</i> · automation/<i>name</i>/trigger</td><td>runs an automation</td></tr>
+            <tr><td>automation/count · list · <i>name</i>/name</td><td>replies like the channel queries</td></tr>
+            <tr><td>marker [<i>text</i>] · note <i>text</i></td><td>FraudCom: into the feed and transcript</td></tr>
+            <tr><td>mute <i>ch</i> [1|0] · unmute <i>ch</i></td><td>FraudCom: stop / resume transcribing</td></tr>
+            <tr><td>start · stop</td><td>FraudCom: listening on / off</td></tr>
+          </table>
+          <small class="pnote"><i>ch</i> is a channel's number (1 = top of the
+            inputs list), its name, or its name with hyphens for spaces
+            (<code>stage-left</code>) — or <code>all</code>, or
+            <code>selected</code>. Replies go back to the sender, over the
+            same transport.</small>
+        </details>
+      </div>
+
+      <div class="prefcard pane" data-pane="api"><h3>Remote API</h3>
+        <small class="pnote">A REST + WebSocket API under <code>/api/v1</code>
+          for show-control software: status, channels, groups, keywords,
+          automations (including webhooks), configurations (your presets), the
+          live transcript (with streaming), window, flash and OSC control.</small>
+        <label class="prefrow"><span><b>Enable the API</b>
+            <small>Other computers on the network can then control FraudCom
+              through it — that's its purpose. Set a key below unless the
+              network is yours alone.</small></span>
+          <input type="checkbox" id="apiChk"></label>
+        <label class="prefrow static"><span><b>Port</b>
+            <small id="apiNote">Automatic uses 24480.</small></span>
+          <input type="text" id="apiPort" inputmode="numeric" placeholder="auto"
+                 style="width:90px;flex:none"></label>
+        <label class="prefrow static"><span><b>API key</b>
+            <small>Without a key, only this computer can connect. Set one to
+              let other devices in: they send
+              <code>Authorization: Bearer &lt;key&gt;</code> (a WebSocket may use
+              <code>?key=</code>).</small></span>
+          <span style="display:flex;gap:6px;flex:none">
+            <input type="password" id="apiKey" autocomplete="off" style="width:150px">
+            <button class="btn" id="apiKeyGen" type="button" title="Make a random key">New</button>
+          </span></label>
+        <small class="pnote">MIDI isn't part of FraudCom: MIDI lists are empty and
+          MIDI sends answer “not implemented”. Keywords are FraudCom's hot words
+          and jargon corrections, and apply to every channel.</small>
+      </div>
+
+      <div class="prefcard pane" data-pane="speech"><h3>Speech recognition</h3>
+        <label class="plabel" for="hwInput">Hot words
+          — highlighted &amp; always alert</label>
+        <input type="text" id="hwInput" placeholder="Add word or phrase, press Enter">
+        <div class="chiplist mt-s" id="hwChips"></div>
+        <label class="plabel" for="corrText">Jargon corrections</label>
+        <textarea id="corrText" rows="6"
+          placeholder="one per line:  misheard => Corrected"></textarea>
+        <div class="rowsplit mt-s">
+          <small class="pnote" style="margin:0">Fixes spelling of trade terms,
+            e.g. <i>f o h =&gt; FOH</i>. Hot words apply as you add them.</small>
+          <button class="btn" id="saveCorr">Save corrections</button>
+        </div>
+      </div>
+
+      <div class="prefcard pane" data-pane="devices"><h3>Devices</h3>
+        <label class="prefrow"><span><b>Show all audio device APIs</b>
+            <small>Off = only real vocal inputs. On = everything the system
+              exposes — loopbacks, virtual devices, legacy APIs.</small></span>
+          <input type="checkbox" id="allApis"></label>
+      </div>
+
+      <div class="prefcard pane" data-pane="about"><h3>About</h3>
+        <div class="aboutname">FraudCom <b id="aboutVer"></b></div>
+        <small class="pnote">Multichannel voice transcriber — 100% local.</small>
+        <h3 class="mt-l">What's new</h3>
+        <div id="changelog"></div>
+      </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="modal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <h3 id="mTitle"></h3>
+    <div id="mBody"></div>
+    <div class="mrow">
+      <button class="btn" id="mCancel">Cancel</button>
+      <button class="primary" id="mOk">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLORS = ['--c0','--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8','--c9','--c10','--c11'];
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const feed = $('#feed');
+
+let devicesCache = [];
+let running = false;
+let transcript = [];
+let lastFinal = {};        // key -> {el, ts}
+let partials = {};         // key -> element
+let colorIdx = {};         // key -> color number
+let nextColor = 0;
+let groups = JSON.parse(localStorage.getItem('vox.groups') || '[]');
+let people = JSON.parse(localStorage.getItem('vox.people') || '[]'); // [{id,name,di,ch,group,color}]
+let route = {};            // live key "di:ch" -> {name,group,color}
+let names = {};            // live key -> display name
+let activeTab = 'all';
+let unread = {};           // tab -> count
+let hotwords = [];
+let hwRegex = null;
+let corrections = {};
+let searchQuery = '';
+let APP_STATE = {};
+let tIndex = {};           // msg id -> {i, prefix} into transcript[]
+let pins = JSON.parse(localStorage.getItem('vox.pins') || '[]');
+let AUTOS = [];            // voice-automation rules (server-side)
+let muted = new Set();     // channel keys muted on the server
+let lastHeard = {};        // key -> ts of its last finished line
+let VIEWER = false;        // opened from another device (read-only)
+let lockedTab = null;      // viewer link made for one group (?tab=…)
+
+// FraudCom never uses a service worker. Evict any that another app left on
+// this origin (127.0.0.1:<port> is shared by whatever held the port before).
+if (navigator.serviceWorker) navigator.serviceWorker.getRegistrations()
+  .then(rs => rs.forEach(r => r.unregister())).catch(() => {});
+// Escapes quotes too — esc() is used inside attribute values, and the DOM
+// textContent trick left " and ' alone (attribute breakout on a crafted name).
+const esc = s => String(s ?? '').replace(/[&<>"']/g,
+  c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmtTime = ts => new Date(ts * 1000).toLocaleTimeString([], {hour12:false});
+// When an input last finished a line — answers "is channel 5 even working?"
+// during soundcheck. Only while listening.
+function heardText(key) {
+  if (!running) return '';
+  const ts = lastHeard[key];
+  if (!ts) return 'not heard yet';
+  const s = Math.max(0, Date.now() / 1000 - ts);
+  return 'heard ' + (s < 5 ? 'just now' : s < 60 ? `${Math.round(s)}s ago`
+    : s < 3600 ? `${Math.round(s / 60)}m ago` : `${Math.round(s / 3600)}h ago`);
+}
+setInterval(() => $$('[data-heard]').forEach(el =>
+  el.textContent = heardText(el.dataset.heard)), 5000);
+// Flat single-color input icons (fill = currentColor so they tint to any
+// color — auto-contrast on avatars, the input's own color in the sidebar).
+const ICON_SVG = {
+  person: '<circle cx="12" cy="7.5" r="4"/><path d="M4 21c0-4.5 3.5-7 8-7s8 2.5 8 7z"/>',
+  talk:   '<path d="M3 4h18v12H10l-6 5v-5H3z"/>',
+  mic:    '<rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0h-2a5 5 0 0 1-10 0z"/><rect x="11" y="16.5" width="2" height="3.5"/><rect x="8" y="20" width="8" height="2" rx="1"/>',
+  headset:'<path d="M4 15v-3a8 8 0 0 1 16 0v3h-2v-3a6 6 0 0 0-12 0v3z"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/>',
+  phone:  '<path d="M6.6 10.8c1.5 3 3.6 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.5 0 1 .5 1 1V20c0 .5-.5 1-1 1C10.8 21 3 13.2 3 4c0-.5.5-1 1-1h3.4c.5 0 1 .5 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/>',
+  beltpack: '<rect x="5.5" y="6" width="13" height="16" rx="2.4"/><circle cx="12" cy="11.6" r="3" style="fill:var(--panel)"/><rect x="11.3" y="9.1" width="1.4" height="2.6" rx=".7"/><rect x="8.3" y="16.6" width="7.4" height="3" rx="1" style="fill:var(--panel)"/><path d="M15 6V4.2c0-1.2.8-1.9 2-1.9h3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+  radio:  '<rect x="7" y="7" width="10" height="15" rx="2"/><rect x="9.5" y="2" width="2" height="5"/><rect x="9.5" y="10" width="5" height="2" style="fill:var(--panel)"/><circle cx="12" cy="17" r="2" style="fill:var(--panel)"/>',
+  horn:   '<path d="M3 10v4h3.5l8.5 5V5l-8.5 5z"/><path d="M17.5 9a4.5 4.5 0 0 1 0 6l1.5 1.5a6.5 6.5 0 0 0 0-9z"/>',
+  fader:  '<rect x="4" y="4" width="2" height="16" rx="1"/><rect x="11" y="4" width="2" height="16" rx="1"/><rect x="18" y="4" width="2" height="16" rx="1"/><rect x="2" y="13" width="6" height="3.4" rx="1.2"/><rect x="9" y="7" width="6" height="3.4" rx="1.2"/><rect x="16" y="10" width="6" height="3.4" rx="1.2"/>',
+  note:   '<circle cx="8" cy="18" r="3.2"/><rect x="10" y="4.5" width="2" height="13.5"/><path d="M12 4.5c4.5 1 5.5 3.2 5.5 6.5-1.6-2.2-3.2-2.7-5.5-2.7z"/>',
+  drums:  '<path d="M3.5 13v5c0 2 3.8 3.6 8.5 3.6s8.5-1.6 8.5-3.6v-5z"/><ellipse cx="12" cy="13" rx="8.5" ry="3"/><ellipse cx="12" cy="13" rx="6.6" ry="1.8" style="fill:var(--panel)"/><path d="M6.2 16.6v3.6M12 17.2v4M17.8 16.6v3.6" fill="none" stroke="var(--panel)" stroke-width="1.1"/><path d="M5 2.5l7.5 8.5M19 2.5l-7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+  guitar: '<circle cx="7.6" cy="16.4" r="5.4"/><circle cx="11.6" cy="12.4" r="3.9"/><circle cx="8.9" cy="15.1" r="1.6" style="fill:var(--panel)"/><path d="M10.6 13.4L19 5" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/><rect x="17.6" y="1.4" width="4" height="4.6" rx="1.1" transform="rotate(45 19.6 3.7)"/>',
+  bass:   '<ellipse cx="7" cy="16.8" rx="5.6" ry="4.6" transform="rotate(-45 7 16.8)"/><ellipse cx="11.6" cy="11.2" rx="1.5" ry="3.4" transform="rotate(-20 11.6 11.2)"/><path d="M9 14.8L20.6 3.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><rect x="4.7" y="16.3" width="4" height="1.5" rx=".6" transform="rotate(-45 6.7 17)" style="fill:var(--panel)"/><rect x="6.9" y="14.1" width="4" height="1.5" rx=".6" transform="rotate(-45 8.9 14.8)" style="fill:var(--panel)"/><circle cx="18.4" cy="2.4" r="1.1"/><circle cx="21.6" cy="5.6" r="1.1"/><circle cx="16.8" cy="4" r="1.1"/><circle cx="20" cy="7.2" r="1.1"/>',
+  keys:   '<rect x="1.5" y="6" width="21" height="13" rx="1.8"/><rect x="3" y="10.2" width="18" height="7.4" rx=".6" style="fill:var(--panel)"/><circle cx="5" cy="8.1" r=".9" style="fill:var(--panel)"/><circle cx="8" cy="8.1" r=".9" style="fill:var(--panel)"/><rect x="13" y="7.4" width="7" height="1.4" rx=".7" style="fill:var(--panel)"/><path d="M6 10.2v7.4M9 10.2v7.4M12 10.2v7.4M15 10.2v7.4M18 10.2v7.4" stroke="currentColor" stroke-width=".8"/><rect x="5" y="10.2" width="1.9" height="4.3"/><rect x="8.1" y="10.2" width="1.9" height="4.3"/><rect x="14" y="10.2" width="1.9" height="4.3"/><rect x="17.1" y="10.2" width="1.9" height="4.3"/>',
+  camera: '<rect x="2.5" y="7" width="13" height="10" rx="2"/><path d="M15.5 11.5l6-3.5v8l-6-3.5z"/>',
+  clip:   '<rect x="5.5" y="4" width="13" height="17.5" rx="2"/><rect x="9" y="2.2" width="6" height="4" rx="1.2"/><rect x="8" y="10" width="8" height="1.8" rx=".9" style="fill:var(--panel)"/><rect x="8" y="14" width="8" height="1.8" rx=".9" style="fill:var(--panel)"/>',
+  stagemgr: '<circle cx="9.5" cy="7.4" r="3.6"/><path d="M5 8V7a4.5 4.5 0 0 1 9 0v1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="4" y="6.6" width="2.2" height="3.4" rx="1"/><path d="M5.4 10.2c.6 1.6 1.9 2.4 3.6 2.4" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M2 21.5c0-4.4 3.2-7 7.5-7s7.5 2.6 7.5 7z"/><rect x="14.2" y="10.6" width="8" height="11" rx="1.3" stroke="var(--panel)" stroke-width="1.2"/><rect x="16.3" y="9.6" width="3.8" height="2.2" rx=".8" stroke="var(--panel)" stroke-width=".8"/><path d="M16.2 15h4M16.2 17.6h4M16.2 20h2.6" stroke="var(--panel)" stroke-width="1.1" stroke-linecap="round"/>',
+  star:   '<path d="M12 2.8l2.6 6.1 6.6.5-5 4.3 1.5 6.5L12 16.7l-5.7 3.5 1.5-6.5-5-4.3 6.6-.5z"/>',
+  siren:  '<path d="M6.5 14.5a5.5 5.5 0 0 1 11 0V18h-11z"/><rect x="4" y="18" width="16" height="2.6" rx="1.3"/><rect x="11" y="1.5" width="2" height="3.5" rx="1"/><rect x="3.5" y="5" width="3.6" height="2" rx="1" transform="rotate(45 5.3 6)"/><rect x="16.9" y="5" width="3.6" height="2" rx="1" transform="rotate(-45 18.7 6)"/>',
+  wrench: '<path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/>',
+};
+const ICON_LABEL = {
+  person: 'Person', talk: 'Speech', mic: 'Microphone',
+  headset: 'Headset / coms', phone: 'Phone', beltpack: 'Intercom / beltpack',
+  radio: 'Walkie / RF', horn: 'PA / announce', fader: 'Console',
+  note: 'Music', drums: 'Drums', guitar: 'Guitar', bass: 'Bass guitar',
+  keys: 'Keyboards', camera: 'Video', clip: 'Clipboard / paperwork',
+  stagemgr: 'Stage Manager',
+  star: 'Talent', siren: 'Alert', wrench: 'Tech',
+};
+const iconSvg = (id, size, color) => ICON_SVG[id]
+  ? `<svg class="ico" width="${size}" height="${size}" viewBox="0 0 24 24"
+       style="color:${color}" aria-hidden="true">${ICON_SVG[id]}</svg>`
+  : null;
+// UI chrome icons. Drawn here rather than typed as symbols (⚙ ⚠ ⚡ 🌐 …):
+// those render as different glyphs — or color emoji — on Windows vs macOS.
+const UI_SVG = {
+  refresh: '<path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/>',
+  sliders: '<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',
+  pencil:  '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  warn:    '<path d="M12 3.5 2.5 20h19z"/><path d="M12 10v4.5M12 17.5h.01"/>',
+  x:       '<path d="M6 6l12 12M18 6 6 18"/>',
+  globe:   '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9s1.2-6.4 3.8-9z"/>',
+  bolt:    '<path class="f" d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12z"/>',
+  dot:     '<circle class="f" cx="12" cy="12" r="5"/>',
+  check:   '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  star:    '<path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z"/>',
+  grip:    '<g class="f"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></g>',
+  down:    '<path d="M12 5v14M6 13l6 6 6-6"/>',
+  more:    '<g class="f"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></g>',
+  download:'<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  trash:   '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+  folder:  '<path d="M3 6.5V19h18V8.5h-9l-2-2z"/>',
+  flag:    '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
+  panel:   '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M9 4.5v15"/>',
+};
+const ui = id => `<svg class="ui" viewBox="0 0 24 24" aria-hidden="true">${UI_SVG[id] || ''}</svg>`;
+$$('[data-ico]').forEach(el => el.insertAdjacentHTML('afterbegin', ui(el.dataset.ico)));
+const IS_MAC = /Mac/.test(navigator.platform || navigator.userAgent);
+$$('.modkey').forEach(el => el.textContent = IS_MAC ? '⌘' : 'Ctrl');
+
+// Only a well-formed hex color may reach a style attribute: roster/preset
+// files are user-editable data, never trusted markup.
+const okHex = h => (typeof h === 'string' && /^#[0-9a-f]{6}$/i.test(h)) ? h : null;
+const personColor = p =>
+  okHex(p.hex) || `var(${COLORS[(p.color || 0) % COLORS.length]})`;
+const colorFor = key => {
+  if (route[key] && okHex(route[key].hex)) return route[key].hex;
+  if (!(key in colorIdx)) colorIdx[key] = nextColor++;
+  return `var(${COLORS[colorIdx[key] % COLORS.length]})`;
+};
+const avatarText = key => {
+  const hex = route[key] && route[key].hex;
+  if (!hex || hex.length !== 7) return 'var(--avatarText)';
+  const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16),
+        b = parseInt(hex.slice(5, 7), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 140 ? '#10141a' : '#fff';
+};
+const initials = n => n.split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+const pid = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+// An input can belong to several groups: p.groups (list). p.group is kept
+// as the FIRST group so older saved rosters/presets and older FraudCom
+// versions still read something sensible.
+const pGroups = p => (Array.isArray(p && p.groups) ? p.groups
+                      : (p && p.group ? [p.group] : [])).filter(g => typeof g === 'string' && g);
+function setGroups(p, list) {
+  const g = [...new Set(list.filter(x => typeof x === 'string' && x))];
+  p.groups = g;
+  p.group = g[0] || '';
+}
+const groupsOf = key => (route[key] || {}).groups || [];
+const groupOf = key => groupsOf(key)[0] || '';
+let _mirrorTimer = null;
+// Mirror the roster to the server so it survives a wiped or clobbered browser
+// profile. localStorage stays the primary store; this is the safety net +
+// backup history. postRoster() writes immediately; mirrorRoster() debounces.
+function postRoster() {
+  return fetch('/roster', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ people, groups, pins }) }).catch(() => {});
+}
+function mirrorRoster() {
+  clearTimeout(_mirrorTimer);
+  _mirrorTimer = setTimeout(postRoster, 600);
+}
+const savePeople = () => {
+  localStorage.setItem('vox.people', JSON.stringify(people));
+  localStorage.setItem('vox.groups', JSON.stringify(groups));
+  mirrorRoster();
+};
+function rebuildRoute() {
+  route = {};
+  people.forEach(p => {
+    if (p.di == null || p.ch == null || p.ch < 0) return;
+    const key = `${p.di}:${p.ch}`;
+    route[key] = { name: (p.name || '').trim() || 'Speaker',
+                   group: pGroups(p)[0] || '', groups: pGroups(p), color: p.color,
+                   hex: p.hex || null, icon: p.icon || null };
+    colorIdx[key] = p.color;
+  });
+}
+
+/* ================= devices & inputs ================= */
+const devicesUrl = () =>
+  '/devices' + (localStorage.getItem('vox.allapis') === '1' ? '?all=1' : '');
+
+// Re-point every input's device index at wherever its device lives THIS
+// session (indices drift between launches); backfill identity for inputs
+// saved before devName existed.
+// Best device for a name when the driver type isn't known (an imported
+// template): exact name, then case-insensitive; prefer ASIO (Windows, the
+// recommended Dante mode), then Core Audio (Mac), then whatever is there.
+function pickDevice(name, api) {
+  if (!name) return null;
+  const low = name.toLowerCase();
+  let c = devicesCache.filter(d => d.name === name);
+  if (!c.length) c = devicesCache.filter(d => (d.name || '').toLowerCase() === low);
+  if (!c.length) return null;
+  const rank = d => d.hostapi === api ? 0 : /asio/i.test(d.hostapi) ? 1
+                  : /core audio/i.test(d.hostapi) ? 2 : 3;
+  return c.sort((a, b) => rank(a) - rank(b))[0];
+}
+function reconcileDevices() {
+  let changed = false;
+  people.forEach(p => {
+    if (p.devName && !p.devApi) {           // from a template: name only
+      const d = pickDevice(p.devName);
+      if (d) { p.di = d.index; p.devName = d.name; p.devApi = d.hostapi; changed = true; }
+    } else if (p.devName) {
+      const d = devicesCache.find(x =>
+        x.name === p.devName && x.hostapi === p.devApi);
+      if (d && d.index !== p.di) { p.di = d.index; changed = true; }
+    } else {
+      const d = deviceByIndex(p.di);
+      if (d) { p.devName = d.name; p.devApi = d.hostapi; changed = true; }
+    }
+  });
+  if (changed) savePeople();
+}
+
+async function loadDevices() {
+  devicesCache = await (await fetch(devicesUrl())).json();
+  reconcileDevices();
+  renderAll();
+}
+function renderAll() { renderGroups(); renderInputs(); }
+
+function deviceByIndex(di) { return devicesCache.find(d => d.index === di); }
+function maxChans(di) {
+  const d = deviceByIndex(di);
+  return d ? Math.min(d.max_input_channels, 64) : 64;
+}
+
+function populateDeviceSelect(sel, di, devName, devApi) {
+  // Select by device IDENTITY (name+api), not the raw index that drifts
+  // between sessions. If the saved device isn't connected, keep it as a
+  // "__keep__" option so saving can't silently reassign it.
+  let cur = devName
+    ? devicesCache.find(d => d.name === devName && d.hostapi === devApi) : null;
+  if (!cur && di != null) cur = deviceByIndex(di);
+  const opts = devicesCache.map(d =>
+    `<option value="${d.index}" ${cur && d.index === cur.index ? 'selected' : ''}>` +
+    `${esc(d.name)} · ${esc(d.hostapi)} · ${d.max_input_channels}ch</option>`);
+  if (di == null && !devName)
+    opts.unshift('<option value="" selected disabled>— pick a device —</option>');
+  else if (!cur)
+    opts.unshift(`<option value="__keep__" selected>${esc(devName || ('device ' + di))} — not connected</option>`);
+  sel.innerHTML = opts.join('');
+}
+function populateChannelSelect(sel, di, ch) {
+  const n = maxChans(di);
+  let opts = '';
+  for (let c = 0; c < n; c++)
+    opts += `<option value="${c}" ${c === ch ? 'selected' : ''}>Channel ${c + 1}</option>`;
+  if (ch != null && ch >= n)   // e.g. preset saved when DVS was 64ch, now 8ch
+    opts += `<option value="${ch}" selected>Channel ${ch + 1} — not on this device now (${n}ch)</option>`;
+  sel.innerHTML = opts;
+}
+
+function routeLabel(p) {
+  const d = deviceByIndex(p.di);
+  const dn = d ? d.name
+    : (p.devName ? `${p.devName} (not connected)`
+       : (p.di == null ? 'no device' : `device ${p.di} (missing)`));
+  return `${dn} · ch ${(p.ch ?? 0) + 1}`;
+}
+
+// Why this input can't start right now (device gone, or the device is
+// currently configured with fewer channels than the saved route) — or null.
+function routeProblem(p) {
+  if (p.di == null) return 'no device selected';
+  const d = deviceByIndex(p.di);
+  if (!d) return 'device not found — reconnect it, then rescan devices';
+  if ((p.ch ?? 0) >= maxChans(p.di))
+    return `ch ${p.ch + 1}, but the device is currently ${d.max_input_channels}ch`;
+  return null;
+}
+
+function renderInputs() {
+  rebuildRoute();
+  const list = $('#inputList');
+  list.innerHTML = '';
+  $('#noInputs').style.display = people.length ? 'none' : 'block';
+  people.forEach((p, idx) => {
+    const prob = routeProblem(p);
+    const key = `${p.di}:${p.ch}`;
+    const isMuted = muted.has(key);
+    const row = document.createElement('div');
+    row.className = 'inputrow' + (isMuted ? ' muted' : '');
+    row.draggable = true;
+    row.dataset.idx = idx;
+    row.innerHTML = `
+      <span class="drag" title="Drag to reorder">${ui('grip')}</span>
+      <div class="pcolor" style="background:${personColor(p)}"></div>
+      <div class="info">
+        <div class="nm" title="${esc((p.name || 'unnamed') + (pGroups(p).length ? ' · ' + pGroups(p).join(', ') : ''))}">${p.icon ? (iconSvg(p.icon, 14, personColor(p)) || esc(p.icon)) + ' ' : ''}${esc(p.name || 'unnamed')}${pGroups(p).length
+          ? ` <span class="faint" style="font-weight:400">· ${esc(pGroups(p).join(', '))}</span>` : ''}</div>
+        <div class="rt${prob ? ' warn' : ''}"
+             title="${esc(prob || routeLabel(p))}">${prob ? ui('warn') + ' ' : ''}<span
+             class="heard" data-heard="${esc(key)}">${heardText(key)}</span>${esc(routeLabel(p))}</div>
+      </div>
+      <div class="meter"><i data-meter="${esc(p.di)}:${esc(p.ch)}"></i></div>
+      <button class="mute${isMuted ? ' on' : ''}" data-mute
+              title="${isMuted ? 'Muted — click to unmute' : 'Mute this input (stops transcribing it)'}">M</button>
+      <button class="solo" data-solo title="Solo this input">S</button>
+      <button class="iedit" title="Edit input">${ui('pencil')}</button>
+      <button class="pdel" title="Remove input">${ui('x')}</button>`;
+    row.querySelector('[data-solo]').onclick = () => {
+      if (p.di != null && p.ch != null)
+        soloChannel(key, (p.name || '').trim() || 'Speaker');
+    };
+    row.querySelector('[data-mute]').onclick = () => {
+      if (p.di == null || p.ch == null) return;
+      fetch('/mute', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, on: !muted.has(key) }) })
+        .then(r => { if (!r.ok) throw new Error(); })
+        .catch(() => showErr('Could not change mute.'));
+    };
+    row.querySelector('.iedit').onclick = () => inputModal(p);
+    row.querySelector('.pdel').onclick = () => {
+      people = people.filter(x => x.id !== p.id);
+      savePeople(); renderAll();
+    };
+    row.addEventListener('dragstart', e => {
+      dragFrom = idx; row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      $$('#inputList .inputrow').forEach(r => r.classList.remove('dragover'));
+    });
+    row.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (dragFrom !== null && +row.dataset.idx !== dragFrom) {
+        $$('#inputList .inputrow').forEach(r => r.classList.remove('dragover'));
+        row.classList.add('dragover');
+      }
+    });
+    row.addEventListener('drop', e => {
+      e.preventDefault();
+      const to = +row.dataset.idx;
+      if (dragFrom === null || dragFrom === to) return;
+      const [moved] = people.splice(dragFrom, 1);
+      people.splice(to, 0, moved);
+      dragFrom = null;
+      savePeople(); renderAll();
+    });
+    list.appendChild(row);
+  });
+  renderTabs();
+}
+let dragFrom = null;
+
+/* ================= modal ================= */
+const modal = $('#modal');
+function openModal(title, bodyHTML, onOk, okLabel = 'Save') {
+  $('#mTitle').textContent = title;
+  $('#mBody').innerHTML = bodyHTML;
+  $('#mOk').textContent = okLabel;
+  modal.hidden = false;
+  $('#mOk').onclick = () => { if (onOk() !== false) closeModal(); };
+}
+function closeModal() { modal.hidden = true; $('#mBody').innerHTML = ''; }
+$('#mCancel').onclick = closeModal;
+modal.onclick = e => { if (e.target === modal) closeModal(); };
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (!modal.hidden) closeModal();
+    else if (!$('#prefs').hidden) $('#prefs').hidden = true;
+    else $('#moreMenu').open = false;
+    return;
+  }
+  // Ctrl+, (⌘, on a Mac): preferences, the standard settings shortcut.
+  if ((e.ctrlKey || e.metaKey) && e.key === ',' && !VIEWER) {
+    e.preventDefault(); showPrefs(); return;
+  }
+  // Live shortcuts — never while typing, never in dialogs, never with a
+  // modifier held (Ctrl+N etc. belong to the system).
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (['input', 'textarea', 'select'].includes(tag)) return;
+  if (!modal.hidden || !$('#prefs').hidden) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (/^[1-9]$/.test(e.key)) {                       // 1–9: tabs, in order
+    const t = $$('#tabs .tab')[+e.key - 1];
+    if (t) { e.preventDefault(); setTab(t.dataset.tab); }
+  } else if (k === 'j' || e.key === 'End') {          // jump to latest
+    e.preventDefault(); $('#jumpBtn').click();
+  } else if (e.key === '\\' && !VIEWER) {            // hide / show sidebar
+    e.preventDefault(); $('#sideBtn').click();
+  } else if (VIEWER) {
+    return;                                           // the rest controls the show
+  } else if (e.code === 'Space') {
+    e.preventDefault(); $('#startBtn').click();
+  } else if (k === 'n') {
+    e.preventDefault(); $('#noteBtn').click();
+  } else if (k === 'm') {
+    e.preventDefault(); dropMarker();
+  }
+});
+
+/* ================= add / edit input ================= */
+function inputModal(p) {
+  const isNew = !p;
+  const data = p || { id: pid(), name: '',
+                      di: devicesCache[0] ? devicesCache[0].index : null,
+                      ch: 0, group: '', color: people.length % 12 };
+  openModal(isNew ? 'Add input' : 'Edit input', `
+    <div class="mfield"><label for="miName">Name</label>
+      <input id="miName" type="text" placeholder="e.g. John" value="${esc(data.name || '')}"></div>
+    <div class="mfield"><label for="miDev">Driver / device</label>
+      <select id="miDev"></select></div>
+    <div class="mfield"><label for="miCh">Channel</label>
+      <select id="miCh"></select></div>
+    <div class="mfield"><label>Groups (optional — tick as many as you like)</label>
+      <div class="mlist" id="miGrp"></div></div>
+    <div class="mfield"><label for="miGate">Background rejection</label>
+      <select id="miGate">
+        <option value="auto">Auto — adapts to this input's noise floor (recommended)</option>
+        <option value="off">Off — transcribe everything on this channel</option>
+        <option value="low">Low — gate at −52 dB</option>
+        <option value="med">Medium — gate at −44 dB</option>
+        <option value="high">High — gate at −34 dB (hot, close mics)</option>
+      </select>
+      <div class="mnote mt-s">Mutes off-mic conversations
+        and room bleed before transcription. Auto listens to the channel's
+        own background level and opens for anything clearly above it — use
+        a fixed level only if Auto misbehaves on a specific source.</div></div>
+    <div class="mfield"><label for="miTranslate">Language</label>
+      <select id="miTranslate">
+        <option value="">Transcribe as spoken (English)</option>
+        <option value="en">Translate to English (any language spoken)</option>
+      </select>
+      <div class="mnote mt-s">Translate uses the
+        multilingual AI model: whatever language is spoken on this channel is
+        rendered as English in the feed. Adds a couple of seconds and some
+        CPU while that channel is talking.</div></div>
+    <div class="mfield"><label>Icon (optional — shows on the avatar
+        instead of initials)</label>
+      <div class="swatches" id="miIco"></div></div>
+    <div class="mfield"><label>Color</label>
+      <div class="swatches" id="miSw"></div></div>`,
+    () => {
+      const name = $('#miName').value.trim();
+      if (!name) { $('#miName').focus(); return false; }
+      const dv = $('#miDev').value;
+      data.name = name;
+      // Persist the device by IDENTITY, not index — PortAudio renumbers
+      // devices every session, so a bare index goes stale on restart.
+      // "__keep__" = the saved device isn't connected right now; leave its
+      // identity untouched rather than reassign it to whatever's on screen.
+      if (dv === '__keep__') {
+        /* keep data.di / data.devName / data.devApi as stored */
+      } else if (dv === '') {
+        data.di = null; data.devName = null; data.devApi = null;
+      } else {
+        data.di = +dv;
+        const dsel = deviceByIndex(data.di);
+        if (dsel) { data.devName = dsel.name; data.devApi = dsel.hostapi; }
+      }
+      const cv = $('#miCh').value;
+      if (cv !== '') data.ch = +cv;
+      setGroups(data, $$('#miGrp input[type=checkbox]').filter(cb => cb.checked)
+                        .map(cb => cb.dataset.g));
+      data.gate = $('#miGate').value;
+      data.translate = $('#miTranslate').value;
+      data.icon = selIcon;
+      data.color = selIdx;
+      data.hex = selHex;
+      if (isNew) people.push(data);
+      savePeople(); renderAll();
+    }, isNew ? 'Add' : 'Save');
+  let selHex = data.hex || null;
+  let selIdx = data.color || 0;
+  let selIcon = data.icon || '';
+  const renderIco = () => {
+    $('#miIco').innerHTML =
+      `<button type="button" class="icosw ${!selIcon ? 'sel' : ''}"
+               data-ico="" title="No icon — use initials">Aa</button>` +
+      Object.keys(ICON_SVG).map(id =>
+        `<button type="button" class="icosw ${selIcon === id ? 'sel' : ''}"
+                 data-ico="${id}" title="${ICON_LABEL[id] || id}">
+           ${iconSvg(id, 17, 'var(--text)')}</button>`).join('');
+    $$('#miIco .icosw').forEach(b => b.onclick = () => {
+      selIcon = b.dataset.ico; renderIco();
+    });
+  };
+  renderIco();
+  const renderSw = () => {
+    $('#miSw').innerHTML = COLORS.map((c, i) =>
+      `<button type="button" class="sw ${!selHex && i === selIdx ? 'sel' : ''}"
+               data-i="${i}" style="background:var(${c})"
+               aria-label="Palette color ${i + 1}"></button>`).join('') +
+      `<label class="swcustom ${selHex ? 'sel' : ''}" title="Custom color…"
+              style="${okHex(selHex) ? `background:${okHex(selHex)};` : ''}">
+         <input type="color" id="miHex" value="${okHex(selHex) || '#39c6ff'}"
+                aria-label="Custom color">${selHex ? '' : '+'}</label>`;
+    $$('#miSw .sw').forEach(b => b.onclick = () => {
+      selIdx = +b.dataset.i; selHex = null; renderSw();
+    });
+    $('#miHex').onchange = e => { selHex = e.target.value; renderSw(); };
+  };
+  renderSw();
+  populateDeviceSelect($('#miDev'), data.di, data.devName, data.devApi);
+  populateChannelSelect($('#miCh'), data.di, data.ch);
+  $('#miGrp').innerHTML = groups.length ? groups.map(g => `
+    <label><input type="checkbox" data-g="${esc(g)}" ${pGroups(data).includes(g) ? 'checked' : ''}>
+      <span style="flex:1">${esc(g)}</span></label>`).join('')
+    : '<div class="mnote" style="padding:6px">No groups yet — add one under Groups in the sidebar.</div>';
+  $('#miGate').value = data.gate || 'auto';
+  $('#miTranslate').value = data.translate || '';
+  $('#miDev').onchange = e => {
+    if (e.target.value === '__keep__' || e.target.value === '') return;
+    populateChannelSelect($('#miCh'), +e.target.value, 0);
+  };
+  $('#miName').focus();
+  // Silently refresh devices so a reconfigured DVS (2x2 … 64x64) shows its
+  // current channel count. Server skips the rescan while capturing.
+  fetch(devicesUrl()).then(r => r.json()).then(ds => {
+    devicesCache = ds;
+    reconcileDevices();                           // may update data.di
+    const dv = $('#miDev'), cv = $('#miCh');
+    if (!dv || !cv) return;                       // dialog already closed
+    const ch = cv.value === '' || cv.value == null ? data.ch : +cv.value;
+    populateDeviceSelect(dv, data.di, data.devName, data.devApi);
+    populateChannelSelect(cv, data.di, ch);
+  }).catch(() => {});
+}
+$('#addInput').onclick = () => inputModal(null);
+
+// Build the /start payload from the people roster.
+let routeConflicts = [];
+function selectedDevices() {
+  rebuildRoute();
+  const byDev = {}, seen = new Set();
+  routeConflicts = [];
+  people.forEach(p => {
+    if (p.di == null || p.ch == null) return;
+    if (routeProblem(p)) return;   // skip a missing/offline device — start the rest
+    const key = `${p.di}:${p.ch}`;
+    if (seen.has(key)) { routeConflicts.push(p); return; }
+    seen.add(key);
+    const name = (p.name || '').trim() || 'Speaker';
+    names[key] = name;
+    const GATE_DB = { off: null, auto: null, low: -52, med: -44, high: -34 };
+    const g = p.gate || 'auto';
+    (byDev[p.di] ||= []).push({ index: p.ch, name,
+      gate_db: GATE_DB[g], gate_auto: g === 'auto',
+      translate: p.translate || null });
+  });
+  return Object.entries(byDev).map(([di, channels]) => {
+    const d = deviceByIndex(+di);
+    return { device_index: +di, name: d ? d.name : null,
+             hostapi: d ? d.hostapi : null, channels };
+  });
+}
+
+/* ================= groups & tabs ================= */
+function renderGroups() {
+  $('#noGroups').style.display = groups.length ? 'none' : 'block';
+  $('#groupChips').innerHTML = groups.map(g => {
+    const n = people.filter(p => pGroups(p).includes(g)).length;
+    return `<span class="chip"><button class="cname" data-edit="${esc(g)}"
+      title="Edit members">${esc(g)} <span class="faint">(${n})</span></button>
+      <button data-del="${esc(g)}" title="Delete group">${ui('x')}</button></span>`;
+  }).join('');
+  $$('#groupChips [data-del]').forEach(b => b.onclick = () => {
+    const g = b.dataset.del;
+    groups = groups.filter(x => x !== g);
+    people.forEach(p => { if (pGroups(p).includes(g)) setGroups(p, pGroups(p).filter(x => x !== g)); });
+    if (activeTab === g) setTab('all');
+    savePeople(); renderAll();
+  });
+  $$('#groupChips [data-edit]').forEach(b =>
+    b.onclick = () => groupModal(b.dataset.edit));
+}
+
+function groupModal(existing) {
+  openModal(existing ? 'Edit group' : 'Add group', `
+    <div class="mfield"><label for="mgName">Group name</label>
+      <input id="mgName" type="text" placeholder="e.g. Band, Crew" value="${esc(existing || '')}"></div>
+    <div class="mfield"><label>Members</label>
+      <div class="mlist" id="mgList">${people.length ? people.map(p => `
+        <label><input type="checkbox" data-id="${esc(p.id)}"
+            ${existing && pGroups(p).includes(existing) ? 'checked' : ''}>
+          <span class="pcolor" style="background:${personColor(p)}"></span>
+          ${p.icon ? (iconSvg(p.icon, 13, personColor(p)) || esc(p.icon)) + ' ' : ''}
+          <span style="flex:1">${esc(p.name || 'unnamed')}</span>
+          <span class="faint mono-xs">ch ${(+p.ch || 0) + 1}</span>
+        </label>`).join('')
+      : '<div class="mnote" style="padding:6px">No inputs yet — add inputs first, then group them.</div>'}</div></div>
+    <div class="mnote">An input can be in several groups — ticking it here adds it to this group and keeps its other groups.</div>`,
+    () => {
+      const name = $('#mgName').value.trim();
+      if (!name) { $('#mgName').focus(); return false; }
+      if (existing && existing !== name) {           // rename
+        groups = groups.map(g => g === existing ? name : g);
+        people.forEach(p => { if (pGroups(p).includes(existing))
+          setGroups(p, pGroups(p).map(x => x === existing ? name : x)); });
+        if (activeTab === existing) activeTab = name;
+      }
+      if (!groups.includes(name)) groups.push(name);
+      $$('#mgList input[type=checkbox]').forEach(cb => {
+        const p = people.find(x => x.id === cb.dataset.id);
+        if (!p) return;
+        const cur = pGroups(p);
+        if (cb.checked && !cur.includes(name)) setGroups(p, cur.concat(name));
+        else if (!cb.checked && cur.includes(name)) setGroups(p, cur.filter(x => x !== name));
+      });
+      savePeople(); renderAll(); applyFilter();
+    }, existing ? 'Save' : 'Add');
+  $('#mgName').focus();
+}
+$('#addGroupBtn').onclick = () => groupModal(null);
+
+/* ================= presets ================= */
+let presets = {};
+async function loadPresets() {
+  try { presets = await (await fetch('/presets')).json(); }
+  catch { presets = {}; }
+  const sel = $('#presetSel');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— saved presets —</option>' +
+    Object.keys(presets).sort().map(n =>
+      `<option ${n === cur ? 'selected' : ''}>${esc(n)}</option>`).join('');
+}
+
+$('#presetSave').onclick = () => {
+  openModal('Save preset', `
+    <div class="mfield"><label for="mpName">Preset name (event)</label>
+      <input id="mpName" type="text" placeholder="e.g. Sat — Main Stage"
+             value="${esc($('#presetSel').value)}"></div>
+    <div class="mnote">Saves the current inputs, groups, and hot words on the
+      server. Using an existing name overwrites it.</div>`,
+    () => {
+      const name = $('#mpName').value.trim();
+      if (!name) { $('#mpName').focus(); return false; }
+      fetch('/presets', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, data: { people, groups, hotwords } }) })
+        .then(r => { if (!r.ok) throw new Error(); })   // a failed save must say so
+        .then(loadPresets)
+        .then(() => { $('#presetSel').value = name; rememberPreset(name); })
+        .catch(() => showErr('Could not save preset.'));
+    }, 'Save');
+  $('#mpName').focus();
+};
+
+const rememberPreset = name =>
+  fetch('/state', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ last_preset: name }) }).catch(() => {});
+
+function applyPreset(n) {
+  const d = presets[n];
+  if (!d) return false;
+  people = JSON.parse(JSON.stringify(d.people || []));
+  groups = [...(d.groups || [])];
+  if (Array.isArray(d.hotwords)) {
+    hotwords = [...d.hotwords];
+    renderHw(); buildHwRegex(); pushLexicon();
+  }
+  activeTab = 'all'; unread = {};
+  savePeople(); renderAll(); applyFilter();
+  $('#presetSel').value = n;
+  return true;
+}
+
+$('#presetLoad').onclick = () => {
+  const n = $('#presetSel').value;
+  if (!applyPreset(n)) return showErr('Pick a preset to load.');
+  rememberPreset(n);
+};
+
+$('#presetDel').onclick = () => {
+  const n = $('#presetSel').value;
+  if (!n) return showErr('Pick a preset to delete.');
+  openModal('Delete preset', `<div class="mnote lg">
+      Delete preset “${esc(n)}”? This can't be undone.</div>`,
+    () => {
+      fetch('/presets/' + encodeURIComponent(n), { method: 'DELETE' })
+        .then(r => { if (!r.ok) throw new Error(); })
+        .then(loadPresets).catch(() => showErr('Could not delete preset.'));
+    }, 'Delete');
+};
+
+/* ================= setup templates (import / export) ================= */
+$('#tplImport').onclick = () => { $('#tplFile').value = ''; $('#tplFile').click(); };
+$('#tplFile').onchange = () => {
+  const f = $('#tplFile').files[0];
+  if (!f) return;
+  if (f.size > 4 * 1024 * 1024) return showErr('That file is too large to be a setup template.');
+  const rd = new FileReader();
+  rd.onload = async () => {
+    let j;
+    try {
+      j = await (await fetch('/template/parse', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: String(rd.result || '') }) })).json();
+    } catch { return showErr('Could not read that template.'); }
+    if (!j.ok) return showErr(j.error || 'Could not read that template.');
+    templateModal(j.template, f.name);
+  };
+  rd.onerror = () => showErr('Could not read that file.');
+  rd.readAsText(f);
+};
+
+function templateModal(t, fileName) {
+  // match devices on THIS computer (template devices are names only)
+  const devs = {};
+  t.people.forEach(p => {
+    const key = (p.devName || '') + '|' + (p.devApi || '');
+    if (!(key in devs)) devs[key] = { name: p.devName, d: p.devName
+      ? (devicesCache.find(x => x.name === p.devName && x.hostapi === p.devApi)
+         || pickDevice(p.devName, p.devApi)) : null, n: 0 };
+    devs[key].n++;
+  });
+  const devRows = Object.values(devs).map(v => `<div>${v.d
+      ? ui('check') + ' ' : ui('warn') + ' '}${esc(v.name || 'no device')} — ${v.n} input${v.n === 1 ? '' : 's'}${
+      v.d ? ` <span class="faint">(found: ${esc(v.d.hostapi)})</span>`
+          : ' <span class="faint">(not on this computer now — they’ll connect when it appears)</span>'}</div>`).join('');
+  const hasAutos = Array.isArray(t.automations);
+  openModal('Import setup template', `
+    <div class="mnote lg"><b>${esc(t.name)}</b> <span class="faint">· ${esc(fileName || '')}</span></div>
+    <div class="mnote mt-s">${t.people.length} input${t.people.length === 1 ? '' : 's'} ·
+      ${t.groups.length} group${t.groups.length === 1 ? '' : 's'}${t.groups.length ? ' (' + esc(t.groups.join(', ')) + ')' : ''} ·
+      ${t.hotwords.length} hot word${t.hotwords.length === 1 ? '' : 's'}${hasAutos ? ` · ${t.automations.length} automation${t.automations.length === 1 ? '' : 's'}` : ''}</div>
+    <div class="mfield mt-m"><label>Audio devices</label><div class="mnote">${devRows || 'none'}</div></div>
+    ${(t.notes || []).map(n => `<div class="mnote mt-s">${esc(n)}</div>`).join('')}
+    <div class="mfield mt-m"><label>Options</label><div class="mlist">
+      <label><input type="checkbox" id="tiHot" ${t.hotwords.length || t.corrections ? 'checked' : ''}>
+        <span style="flex:1">Replace hot words${t.corrections ? ' and corrections' : ''} with the template’s</span></label>
+      ${hasAutos ? `<label><input type="checkbox" id="tiAuto">
+        <span style="flex:1">Replace automations with the template’s</span></label>` : ''}
+      <label><input type="checkbox" id="tiPreset" checked>
+        <span style="flex:1">Also save it as a preset named “${esc(t.name)}”</span></label>
+    </div></div>
+    <div class="mnote mt-s">Importing replaces your current inputs and groups
+      (your roster backups keep the old ones).</div>`,
+    () => {
+      const autosOn = hasAutos && $('#tiAuto') && $('#tiAuto').checked;
+      people = t.people.map(p => {
+        const q = Object.assign({}, p);
+        const d = (q.devName && (devicesCache.find(x => x.name === q.devName && x.hostapi === q.devApi)
+                   || pickDevice(q.devName, q.devApi))) || null;
+        q.di = d ? d.index : null;
+        if (d) { q.devName = d.name; q.devApi = d.hostapi; }
+        setGroups(q, pGroups(q).filter(g => t.groups.includes(g)));
+        return q;
+      });
+      groups = [...t.groups];
+      pins = [...(t.pins || [])];
+      if ($('#tiHot').checked) {
+        hotwords = [...t.hotwords];
+        if (t.corrections) corrections = Object.assign({}, t.corrections);
+        renderHw(); buildHwRegex(); pushLexicon();
+      }
+      if (autosOn) { AUTOS = t.automations; saveAutos(); }
+      activeTab = 'all'; unread = {};
+      savePeople(); renderAll(); renderTabs(); applyFilter();
+      if ($('#tiPreset').checked) {
+        fetch('/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: t.name, data: { people, groups, hotwords } }) })
+          .then(r => { if (!r.ok) throw new Error(); })
+          .then(loadPresets).then(() => { $('#presetSel').value = t.name; rememberPreset(t.name); })
+          .catch(() => showErr('Imported, but the preset could not be saved.'));
+      }
+      showOk(`Imported “${t.name}”: ${people.length} input${people.length === 1 ? '' : 's'}, ${groups.length} group${groups.length === 1 ? '' : 's'}.`);
+    }, 'Import');
+}
+
+$('#tplExport').onclick = () => {
+  const def = $('#presetSel').value || 'FraudCom setup';
+  openModal('Export setup template', `
+    <div class="mfield"><label for="teName">Template name</label>
+      <input id="teName" type="text" value="${esc(def)}"></div>
+    <div class="mlist"><label><input type="checkbox" id="teAuto" checked>
+      <span style="flex:1">Include automations (${AUTOS.length})</span></label></div>
+    <div class="mnote mt-s">Saves a .fctemplate file with the current inputs,
+      groups, colors, hot words and corrections. Device numbers aren’t saved —
+      inputs reconnect by device name on the other computer.</div>`,
+    () => {
+      const name = $('#teName').value.trim();
+      if (!name) { $('#teName').focus(); return false; }
+      exportTemplate(name, $('#teAuto').checked);
+    }, 'Export');
+  $('#teName').focus();
+};
+async function exportTemplate(name, withAutos) {
+      try {
+        const j = await (await fetch('/template/export', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, people, groups, pins,
+                                 automations: withAutos }) })).json();
+        if (j.cancelled) return;
+        if (!j.ok) return showErr('Could not export: ' + (j.error || 'unknown error'));
+        showOk('Template saved: ' + j.path);
+        if (!j.dialog) fetch('/template/reveal', { method: 'POST' }).catch(() => {});
+      } catch { showErr('Could not export the template.'); }
+}
+
+function renderTabs() {
+  const ordered = [...groups].sort((a, b) =>
+    (pins.includes(b) ? 1 : 0) - (pins.includes(a) ? 1 : 0));
+  // A viewer link made for one group shows only that group.
+  const tabs = lockedTab ? [{id: lockedTab, label: lockedTab}]
+    : [{id:'all', label:'All'}].concat(
+        ordered.map(g => ({id:g, label:g, pinnable:!VIEWER})));
+  if (activeTab.startsWith('solo:'))
+    tabs.push({id:activeTab, label:'Solo: ' + (names[activeTab.slice(5)] || 'channel'), closable:true});
+  $('#tabs').innerHTML = tabs.map(t => `
+    <button class="tab ${t.id===activeTab?'active':''}" data-tab="${esc(t.id)}"
+      ${t.pinnable ? `draggable="true" data-group="${esc(t.id)}"` : ''}>
+      ${t.pinnable ? `<span class="pin ${pins.includes(t.id)?'on':''}"
+        data-pin="${esc(t.id)}" title="Pin tab to front">${ui('star')}</span>` : ''}
+      ${esc(t.label)}
+      <span class="badge ${unread[t.id]?'show':''}">${unread[t.id]||''}</span>
+      ${t.closable ? `<span class="x">${ui('x')}</span>` : ''}
+    </button>`).join('');
+  $$('#tabs .tab').forEach(b => {
+    b.onclick = e => {
+      const pin = e.target.closest('[data-pin]');
+      if (pin) {
+        const g = pin.dataset.pin;
+        pins = pins.includes(g) ? pins.filter(x => x !== g) : [...pins, g];
+        localStorage.setItem('vox.pins', JSON.stringify(pins));
+        renderTabs();
+        return;
+      }
+      if (e.target.closest('.x')) { setTab(lockedTab || 'all'); return; }
+      setTab(b.dataset.tab);
+    };
+    if (!b.dataset.group) return;
+    b.addEventListener('dragstart', e => {
+      tabDragFrom = b.dataset.group; b.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    b.addEventListener('dragend', () => {
+      b.classList.remove('dragging');
+      $$('#tabs .tab').forEach(t => t.classList.remove('dragover'));
+    });
+    b.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (tabDragFrom && b.dataset.group !== tabDragFrom) {
+        $$('#tabs .tab').forEach(t => t.classList.remove('dragover'));
+        b.classList.add('dragover');
+      }
+    });
+    b.addEventListener('drop', e => {
+      e.preventDefault();
+      const to = b.dataset.group;
+      if (!tabDragFrom || tabDragFrom === to) return;
+      groups = groups.filter(g => g !== tabDragFrom);
+      groups.splice(groups.indexOf(to), 0, tabDragFrom);
+      tabDragFrom = null;
+      savePeople(); renderAll();
+    });
+  });
+}
+let tabDragFrom = null;
+
+function setTab(t) {
+  // A soloed channel is the "selected" one for OSC channel/selected/…
+  if (!VIEWER && t !== activeTab && (t.startsWith('solo:') || activeTab.startsWith('solo:')))
+    fetch('/selected', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: t.startsWith('solo:') ? t.slice(5) : null }) }).catch(() => {});
+  activeTab = t;
+  unread[t] = 0;
+  // Everything shown on the tab you just opened counts as seen.
+  $$('#feed .msg').forEach(el => {
+    if (visibleIn(el.dataset.key, t)) el.dataset.seen = '1';
+  });
+  renderTabs();
+  applyFilter();
+  feed.scrollTop = feed.scrollHeight;
+}
+
+function soloChannel(key, name) {
+  names[key] = names[key] || name;
+  setTab('solo:' + key);
+}
+
+function visibleIn(key, tab) {
+  if (tab === 'all') return true;
+  if (tab.startsWith('solo:')) return tab.slice(5) === key;
+  return groupsOf(key).includes(tab);
+}
+
+const msgMatches = el =>
+  !searchQuery || el.textContent.toLowerCase().includes(searchQuery);
+
+function applyFilter() {
+  $$('#feed .msg').forEach(el =>
+    el.style.display =
+      (visibleIn(el.dataset.key, activeTab) && msgMatches(el)) ? '' : 'none');
+}
+
+$('#search').addEventListener('input', e => {
+  searchQuery = e.target.value.trim().toLowerCase();
+  applyFilter();
+});
+
+/* ================= hotwords & lexicon ================= */
+function buildHwRegex() {
+  hwRegex = hotwords.length
+    ? new RegExp('\\b(' + hotwords.map(w =>
+        w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')\\b', 'gi')
+    : null;
+}
+function renderHw() {
+  const box = $('#hwChips');
+  if (!box) return;                     // preferences dialog not open
+  box.innerHTML = hotwords.map(w =>
+    `<span class="chip hw">${esc(w)}<button data-hw="${esc(w)}"
+       title="Remove">${ui('x')}</button></span>`).join('');
+  $$('#hwChips [data-hw]').forEach(b => b.onclick = () => {
+    hotwords = hotwords.filter(w => w !== b.dataset.hw);
+    renderHw(); buildHwRegex(); pushLexicon();
+  });
+}
+
+async function loadLexicon() {
+  const lex = await (await fetch('/lexicon')).json();
+  hotwords = lex.hotwords || [];
+  corrections = lex.corrections || {};
+  buildHwRegex();
+}
+async function pushLexicon() {
+  try {
+    const r = await fetch('/lexicon', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ corrections, hotwords }) });
+    if (!r.ok) throw new Error();
+  } catch { showErr('Could not save hot words / corrections.'); }
+}
+
+/* ================= preferences page ================= */
+const postState = patch =>
+  fetch('/state', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch) }).catch(() => {});
+
+function refreshShareUI() {
+  const on = APP_STATE.share !== false;
+  $('#shareChk').checked = on;
+  $('#shareInfo').hidden = !on || !APP_STATE.lan_url;
+  const sel = $('#shareTab'), cur = groups.includes(sel.value) ? sel.value : '';
+  sel.innerHTML = '<option value="">All channels</option>' + groups.map(g =>
+    `<option ${g === cur ? 'selected' : ''}>${esc(g)}</option>`).join('');
+  if (on && APP_STATE.lan_url) {
+    const q = cur ? '?tab=' + encodeURIComponent(cur) : '';
+    $('#shareUrl').textContent = APP_STATE.lan_url + (q ? '/' + q : '');
+    $('#shareQr').src = '/qr.svg' + (q || '?') + '&t=' + Date.now();
+  }
+}
+
+async function showPrefs() {
+  try { APP_STATE = await (await fetch('/state')).json(); } catch {}
+  $('#autoStart').checked = APP_STATE.autostart !== false;
+  $('#refineChk').checked = APP_STATE.refine !== false;
+  if (APP_STATE.refine_failed)
+    $('#refineNote').textContent =
+      'Whisper model failed to load, so refinement is off' +
+      (APP_STATE.refine_error ? ': ' + APP_STATE.refine_error : '.');
+  $('#allApis').checked = localStorage.getItem('vox.allapis') === '1';
+  $('#retentionSel').value = localStorage.getItem('vox.retention') || '0';
+  $('#autosaveChk').checked = APP_STATE.autosave !== false;
+  if (APP_STATE.version) {
+    $('#verTag').textContent = 'FraudCom v' + APP_STATE.version;
+    $('#aboutVer').textContent = 'v' + APP_STATE.version;
+    $('.brand h1').title = 'FraudCom v' + APP_STATE.version;
+  }
+  $('#corrText').value = Object.entries(corrections)
+    .map(([k, v]) => `${k} => ${v}`).join('\n');
+  renderHw();
+  refreshShareUI();
+  refreshOscRxUI();
+  refreshApiUI();
+  renderAutos();
+  $('#prefs').hidden = false;
+}
+$('#prefsBtn').onclick = showPrefs;
+
+/* hide / show the inputs & groups sidebar (remembered on this computer) */
+function setSidebar(hidden) {
+  document.body.classList.toggle('sidecollapsed', hidden);
+  const b = $('#sideBtn');
+  b.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+  b.title = (hidden ? 'Show inputs & groups' : 'Hide inputs & groups') + ' (\\)';
+  b.setAttribute('aria-label', hidden ? 'Show inputs and groups' : 'Hide inputs and groups');
+  try { localStorage.setItem('fc.sidebarHidden', hidden ? '1' : '0'); } catch {}
+}
+$('#sideBtn').onclick = () =>
+  setSidebar(!document.body.classList.contains('sidecollapsed'));
+try { if (localStorage.getItem('fc.sidebarHidden') === '1') setSidebar(true); } catch {}
+$('#prefsClose').onclick = () => { $('#prefs').hidden = true; };
+
+/* preferences left-nav pane switching */
+function showPane(id) {
+  $$('#pnav button').forEach(b => b.classList.toggle('on', b.dataset.pane === id));
+  $$('#prefs .pane').forEach(p => p.classList.toggle('active', p.dataset.pane === id));
+  $('#prefs').scrollTop = 0;            // #prefs is the scroll container
+  if (id === 'presets') renderRosterBackups();
+}
+
+// ---- Roster safety net (server-side mirror + backup history) ------------
+async function safetyRestoreRoster() {
+  if (people.length) return;            // localStorage still has the roster
+  try {
+    const r = await (await fetch('/roster')).json();
+    if (r && Array.isArray(r.people) && r.people.length) {
+      people = r.people;
+      groups = Array.isArray(r.groups) ? r.groups : [];
+      if (Array.isArray(r.pins)) pins = r.pins;
+      localStorage.setItem('vox.people', JSON.stringify(people));
+      localStorage.setItem('vox.groups', JSON.stringify(groups));
+      showOk(`Roster restored from the server backup (${people.length} input${people.length === 1 ? '' : 's'}).`);
+    }
+  } catch {}
+}
+
+const _bkTime = ts => ts ? new Date(ts * 1000).toLocaleString([],
+  { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  : 'unknown time';
+
+async function renderRosterBackups() {
+  const box = $('#rosterBackups');
+  if (!box) return;
+  box.innerHTML = '<small class="pnote">Loading…</small>';
+  let list = [];
+  try { list = (await (await fetch('/roster/backups')).json()).backups || []; }
+  catch { box.innerHTML = '<small class="pnote">Couldn’t load backups.</small>'; return; }
+  if (!list.length) { box.innerHTML = '<small class="pnote">No backups yet — they’ll appear as you edit your roster.</small>'; return; }
+  box.innerHTML = '';
+  list.forEach(b => {
+    const row = document.createElement('div');
+    row.className = 'bkrow';
+    const cur = b.id === 'current';
+    const names = (b.names || []).filter(Boolean).join(', ') || '—';
+    row.innerHTML = `<div class="bkinfo">
+        <b>${cur ? 'Current' : _bkTime(b.saved)}</b>
+        <small>${b.inputs} input${b.inputs === 1 ? '' : 's'}${b.groups ? ` · ${b.groups} group${b.groups === 1 ? '' : 's'}` : ''} — ${esc(names)}</small>
+      </div>`;
+    if (!cur) {
+      const btn = document.createElement('button');
+      btn.className = 'btn'; btn.textContent = 'Restore';
+      btn.onclick = () => restoreRosterBackup(b);
+      row.appendChild(btn);
+    }
+    box.appendChild(row);
+  });
+}
+
+function restoreRosterBackup(b) {
+  const names = (b.names || []).filter(Boolean).join(', ') || '—';
+  openModal('Restore roster',
+    `<div class="mnote lg">Replace your current inputs
+       and groups with this backup from <b>${_bkTime(b.saved)}</b>?<br><br>
+       <b>${b.inputs} inputs:</b> ${esc(names)}<br><br>
+       Your current roster is saved to history first, so this is reversible.</div>`,
+    async () => {
+      try {
+        const r = await (await fetch('/roster/restore', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: b.id }) })).json();
+        if (!r.ok) return showErr(r.error || 'Restore failed.');
+        people = r.people || [];
+        groups = Array.isArray(r.groups) ? r.groups : [];
+        if (Array.isArray(r.pins)) pins = r.pins;
+        localStorage.setItem('vox.people', JSON.stringify(people));
+        localStorage.setItem('vox.groups', JSON.stringify(groups));
+        clearTimeout(_mirrorTimer);      // cancel debounce; write now so the
+        await postRoster();              // backup list below reflects reality
+        activeTab = 'all'; unread = {};
+        renderAll(); applyFilter();
+        renderRosterBackups();
+        showOk(`Restored ${people.length} input${people.length === 1 ? '' : 's'}.`);
+      } catch { showErr('Restore failed.'); }
+    }, 'Restore');
+}
+$$('#pnav button').forEach(b => b.onclick = () => showPane(b.dataset.pane));
+
+$('#autoStart').onchange = e => {
+  APP_STATE.autostart = e.target.checked;
+  postState({ autostart: e.target.checked });
+};
+$('#refineChk').onchange = e => {
+  APP_STATE.refine = e.target.checked;
+  postState({ refine: e.target.checked });
+};
+$('#shareChk').onchange = e => {
+  APP_STATE.share = e.target.checked;
+  postState({ share: e.target.checked });
+  refreshShareUI();
+};
+$('#copyUrl').onclick = () => {
+  navigator.clipboard?.writeText($('#shareUrl').textContent).then(() => {
+    $('#copyUrl').innerHTML = ui('check') + 'Copied';
+    setTimeout(() => $('#copyUrl').textContent = 'Copy', 1200);
+  });
+};
+$('#shareTab').onchange = refreshShareUI;
+$('#oscRxChk').onchange = e => saveSetting({ osc_rx: e.target.checked });
+$('#oscRxProto').onchange = e => saveSetting({ osc_rx_proto: e.target.value });
+$('#apiChk').onchange = e => saveSetting({ api_on: e.target.checked });
+$('#apiKey').onchange = e => saveSetting({ api_key: e.target.value });
+$('#apiKeyGen').onclick = () => {
+  const b = crypto.getRandomValues(new Uint8Array(18));
+  $('#apiKey').value = btoa(String.fromCharCode(...b)).replace(/[+/=]/g, '');
+  $('#apiKey').type = 'text';                 // show it once so it can be copied
+  saveSetting({ api_key: $('#apiKey').value });
+};
+// A port box: empty = automatic (0); otherwise 1024–65535.
+const portBox = (el, field, label) => el.onchange = () => {
+  const raw = el.value.trim();
+  const port = raw === '' ? 0 : parseInt(raw, 10);
+  if (raw !== '' && !(port >= 1024 && port <= 65535))
+    return showErr(`${label} port must be 1024–65535, or empty for automatic.`);
+  saveSetting({ [field]: port });
+};
+portBox($('#oscRxPort'), 'osc_rx_port', 'OSC');
+portBox($('#apiPort'), 'api_port', 'API');
+async function saveSetting(patch) {
+  try {
+    const j = await (await fetch('/state', { method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch) })).json();
+    if (!j.ok) showErr(j.error || 'Could not change that setting.');
+    APP_STATE = await (await fetch('/state')).json();   // the real ports, errors, notes
+    refreshOscRxUI(); refreshApiUI();
+  } catch { showErr('Could not change that setting.'); }
+}
+const lanHost = () => APP_STATE.lan_url ? new URL(APP_STATE.lan_url).hostname
+                                        : "this computer's address";
+function noteLine(el, error, note, ok) {
+  el.textContent = error || note || ok;
+  el.style.color = error ? 'var(--danger)' : note ? 'var(--warn)' : '';
+}
+function refreshOscRxUI() {
+  $('#oscRxChk').checked = !!APP_STATE.osc_rx;
+  $('#oscRxPort').value = APP_STATE.osc_rx_port || '';
+  $('#oscRxPort').placeholder = 'auto';
+  $('#oscRxProto').value = APP_STATE.osc_rx_proto || 'both';
+  const port =APP_STATE.osc_rx_actual || APP_STATE.osc_rx_port || 9000;
+  noteLine($('#oscRxNote'), APP_STATE.osc_rx_error, APP_STATE.osc_rx_note,
+    APP_STATE.osc_rx ? `Listening: send to ${lanHost()}, port ${port}.`
+                     : 'Empty = automatic (9000).');
+}
+function refreshApiUI() {
+  $('#apiChk').checked = !!APP_STATE.api_on;
+  $('#apiPort').value = APP_STATE.api_port || '';
+  if (document.activeElement !== $('#apiKey')) {
+    $('#apiKey').value = APP_STATE.api_key || '';
+  }
+  noteLine($('#apiNote'), APP_STATE.api_error, APP_STATE.api_note,
+    APP_STATE.api_on && APP_STATE.api_actual
+      ? (APP_STATE.api_key
+          ? `Running at http://${lanHost()}:${APP_STATE.api_actual}/api/v1`
+          : `Running at http://127.0.0.1:${APP_STATE.api_actual}/api/v1 (this computer only: set a key for other devices)`)
+      : 'Empty = automatic (24480).');
+}
+$('#allApis').onchange = e => {
+  localStorage.setItem('vox.allapis', e.target.checked ? '1' : '0');
+  loadDevices();
+};
+$('#retentionSel').onchange = e =>
+  localStorage.setItem('vox.retention', e.target.value);
+$('#openTx').onclick = () =>
+  fetch('/open-transcripts', { method: 'POST' }).catch(() => {});
+$('#autosaveChk').onchange = e => {
+  APP_STATE.autosave = e.target.checked;
+  postState({ autosave: e.target.checked });
+};
+
+/* ================= theme ================= */
+const lightMq = window.matchMedia('(prefers-color-scheme: light)');
+function applyTheme() {
+  const pref = localStorage.getItem('vox.theme') || 'system';
+  const light = pref === 'light' || (pref === 'system' && lightMq.matches);
+  document.documentElement.dataset.theme = light ? 'light' : 'dark';
+  $$('#themeSeg button').forEach(b =>
+    b.classList.toggle('on', b.dataset.t === pref));
+}
+lightMq.addEventListener('change', applyTheme);
+$$('#themeSeg button').forEach(b => b.onclick = () => {
+  localStorage.setItem('vox.theme', b.dataset.t);
+  applyTheme();
+});
+applyTheme();
+
+// What's new — update alongside APP_VERSION with every shipped build.
+const CHANGELOG = [
+  { v: '1.12.3', date: '2026-11-07', items: [
+    'Fixed (Mac): FraudCom could close by itself as listening started when a sound device (e.g. Dante Virtual Soundcard) ran at a sample rate other than 48 kHz with many channels. On a Mac FraudCom now uses the device\u2019s own rate and small audio blocks.',
+    'If FraudCom ever fails to start or closes unexpectedly, it now leaves startup_error.txt / crash.log in its data folder.',
+  ]},
+  { v: '1.12.2', date: '2026-11-07', items: [
+    'Hide the inputs & groups sidebar with the new button next to Preferences (or press \\). The FraudCom name, Preferences, rescan and Start listening stay in a slim bar across the top; FraudCom remembers your choice.',
+  ]},
+  { v: '1.12.1', date: '2026-11-02', items: [
+    'Fixed (Mac): .pcconfig files were greyed out in Import template — the file picker now lets you choose any file and FraudCom checks it.',
+  ]},
+  { v: '1.12.0', date: '2026-11-01', items: [
+    'Fixed (Mac): a second FraudCom window could open by itself a few seconds after listening started, when the speech model loaded.',
+    'Inputs can belong to more than one group — tick several groups when editing an input, or add it from each group’s member list. A line shows on every tab its input belongs to.',
+    'Setup templates (Preferences → Presets): export your inputs, groups, colors, hot words, corrections and automations to a .fctemplate file, and import one on another computer. Import also reads .pcconfig show files (inputs, groups, colors and keywords). Inputs reconnect to the audio devices on that computer by name.',
+    'More flash colors: blue, purple, magenta, pink, orange, yellow, lime, teal, white, gray and black, plus any custom color. OSC /fraudcom/flash and the Remote API flash accept a color too.',
+  ]},
+  { v: '1.11.0', date: '2026-10-25', items: [
+    'Console shortcuts in Automations: Yamaha RIVAGE (channel / mix / matrix / stereo / DCA on-off, input-to-mix sends, scene recall) and DiGiCo SD / Quantum (input / aux / group / matrix / control group on-off, input-to-aux sends, snapshot next / previous / fire selected, macro recall) — pick from menus, FraudCom builds the OSC.',
+    'Automations can send MIDI: note, control change, program change or raw hex (MMC / SysEx), to any MIDI output or to FraudCom’s own virtual port. The Remote API’s MIDI device list and MIDI send now work too.',
+    'Notes and markers sit on the right side of the feed so they stand out.',
+    'New input icons: drums, guitar, bass guitar, keyboards, intercom beltpack and Stage Manager.',
+    'Mac: if an audio device won’t open, the error now says why (and for Dante Virtual Soundcard, what to do).',
+  ]},
+  { v: '1.10.1', date: '2026-10-14', items: [
+    'Security: the Remote API without a key now answers this computer only; set a key to let other devices in.',
+    'Security: viewers on the network no longer see settings, ports or keyword corrections, and a group QR link only works for a real group.',
+    'OSC input hardened: malformed or oversized packets are ignored without stopping the listener, replies per packet are capped, and an automation that triggers itself can no longer run away (one rule fires at most 20 times a second).',
+    'Automations: an OSC pattern that could never match (or would take forever) is refused when you save it, a turned-off automation can no longer be fired over OSC, and delayed actions honor "ignore if running" / "cancel and restart".',
+    'Mac: a channel keeps its mute and its place on screen when its device restarts; if a restarted Dante Virtual Soundcard is not found while other inputs are running, FraudCom tells you to press Stop then Start.',
+    'Updated two bundled libraries with security fixes.',
+  ]},
+  { v: '1.10.0', date: '2026-10-13', items: [
+    'Start order no longer matters: an interface or Dante Virtual Soundcard started after FraudCom is picked up when you press Start (Mac; on Windows, pressing Start now also re-reads the device list). On a Mac, a Dante Virtual Soundcard that restarts mid-show is found again automatically.',
+    'Mute any input from its M button (next to S): it stops being transcribed, the meter keeps showing its level, and the mute is noted in the saved transcript.',
+    'Health readout next to LIVE: CPU use, how far transcription is lagging, and the Whisper queue — it turns amber if this computer can\'t keep up. Each input also shows when it was last heard.',
+    'OSC input (Preferences → Automation), UDP and/or TCP: /fraudcom/… commands to select, send to, clear and mark channels, scroll, change text size, flash, trigger automations, answer ping/version and channel/automation queries, drop markers and notes, mute/unmute and start/stop. Off by default.',
+    'Remote API (Preferences → Remote API): a REST + WebSocket API on port 24480 for show-control software — status, channels, groups, keywords, automations and webhooks, configurations (presets), the live transcript (with streaming), window, flash and OSC. Without an API key only this computer can connect. Off by default.',
+    'OSC input listens on port 9000 by default; if another app already holds it, FraudCom moves to 9765 and says so.',
+    'Automations: name them (OSC can trigger one by name), trigger them from an incoming OSC message with wildcard patterns, send OSC over TCP (QLab) as well as UDP, set argument types explicitly, and use variables like {value}, {source.channel} or a captured {name} in the address, arguments and flash text.',
+    'Keyboard: M drops a numbered marker, 1–9 switch tabs, J jumps to the latest line, and Ctrl+, (⌘, on a Mac) opens Preferences.',
+    'Web sharing: viewers now see your group tabs, and you can make a link that shows only one group (Preferences → Web sharing → Link opens).',
+    'A tidier toolbar: Download, Open transcripts folder and Clear moved into the ⋯ menu, and Clear now asks first.',
+    'Looks the same on Windows and Mac: built-in fonts and icons replace the system symbols, which drew differently (or as color emoji) on each.',
+  ]},
+  { v: '1.9.5', date: '2026-10-13', items: [
+    'FraudCom opens straight to the app: no sign-in, no account, fully offline from the first launch.',
+    'The update check is gone too. FraudCom makes no internet connections of its own. The only exception: a missing speech model (for example the translation model, the first time a channel is set to translate) is downloaded once from the public model library.',
+    'Reliability: a file briefly locked by antivirus or backup software can no longer wipe your other presets or settings; the last spoken line on each channel is no longer lost when you press Stop and close; one bad correction can no longer stop a channel transcribing; an unreachable OSC host no longer freezes the screen; opening FraudCom twice no longer re-initializes the audio drivers mid-show.',
+    'Security: only FraudCom\'s own window can control it (another local web page on a different port can\'t); LAN viewers no longer see OSC targets, error details, or your preset names.',
+  ]},
+  { v: '1.9.4', date: '2026-10-13', items: [
+    'Fixed: if another program was already using FraudCom\'s port (for example a web preview server), FraudCom opened a window onto that program instead of itself. It now checks that the server really is FraudCom, and otherwise starts on the next free port.',
+  ]},
+  { v: '1.9.3', date: '2026-09-21', items: [
+    'Security: other websites open on the show PC can no longer read the live feed or send FraudCom commands (cross-site and DNS-rebinding requests are refused). LAN viewers now see only the feed — not your roster, presets, automation targets, or device list.',
+    'Reliability: settings, presets, and roster are saved atomically, so a crash or power loss can never blank them; a corrupt file is quarantined instead of overwritten. Transcript lines are never dropped on a disk hiccup, and a disk problem can no longer break Start/Stop.',
+    'Automations: phrases match whole words only — a "go" rule no longer fires on "gone" or "google". Fixed a bug where a cue that fired in soundcheck could be silently skipped on the show\'s first line after Stop/Start.',
+    'Fixes: Stop during a device recovery could leave audio running; a second audio device\'s meters could look dead; presets with "/" in the name couldn\'t be deleted; turning web sharing off now disconnects viewers immediately; Stop no longer shows IDLE unless the server confirms it.',
+  ]},
+  { v: '1.9.2', date: '2026-07-11', items: [
+    'Fixed: Whisper (the accuracy pass that cleans up the fast live text) was silently failing to load — a packaging step had stripped a library it depends on. Refinement works again. Preferences → About now shows the exact reason if it ever can’t load.',
+  ]},
+  { v: '1.9.1', date: '2026-07-11', items: [
+    'One dead input no longer stops the show. If a mic or device is offline when you press Start, FraudCom now launches every input that works and tells you which ones it skipped (and why) — instead of refusing to start at all. Reconnect the device, rescan, and restart to fold it back in. A device that drops mid-show still auto-recovers as before.',
+  ]},
+  { v: '1.9.0', date: '2026-07-11', items: [
+    'Your roster is now safe. Inputs and groups auto-save to disk on every change, with a running backup history — they no longer live only in fragile browser storage. If a roster ever vanishes, restore it under Preferences → Presets → Roster backups. The app also auto-recovers your roster on launch if the browser data was cleared.',
+  ]},
+  { v: '1.7.0', date: '2026-07-10', items: [
+    'Smaller updates: the AI models now live beside the app instead of inside it, so an update download is the app only (~200 MB) instead of the full ~650 MB. New layout is a one-time full install.',
+  ]},
+  { v: '1.6.0', date: '2026-07-10', items: [
+    'The app now checks for a newer version on launch — a dot on the ⚙ gear and a line in Preferences → About with a download link when one is available. Fully optional and offline-safe.',
+  ]},
+  { v: '1.5.0', date: '2026-07-10', items: [
+    'New automation action: flash a big message across the whole screen when a phrase is heard — impossible to miss. Pick the message, color, and duration; "Preview flash" tests it.',
+  ]},
+  { v: '1.4.1', date: '2026-07-10', items: [
+    'Trimmed ~27 MB of unused video codecs from the app (audio-only, so they were dead weight) — smaller download, identical behavior.',
+  ]},
+  { v: '1.4.0', date: '2026-07-09', items: [
+    'Preferences redesigned with a left-hand menu — pick a section, its settings open on the right. No more one long scroll.',
+    'Drag and drop the group tabs across the top to reorder them.',
+  ]},
+  { v: '1.3.0', date: '2026-07-09', items: [
+    'Drag and drop inputs in the sidebar to reorder them — grab the ⠿ handle on the left of any input.',
+  ]},
+  { v: '1.2.1', date: '2026-07-09', items: [
+    'Fixed inputs losing their device on some updates. Devices are now matched by identity, and editing an input while its device is unplugged no longer silently reassigns it — it shows "not connected" and keeps the saved routing.',
+  ]},
+  { v: '1.2.0', date: '2026-07-09', items: [
+    'Light theme for daylight use — Preferences → Appearance: System / Light / Dark. System follows Windows automatically. Accents and speaker colors are re-tuned per theme for legibility.',
+  ]},
+  { v: '1.1.0', date: '2026-07-09', items: [
+    'Errors moved off the sidebar: a compact ⚠ badge next to IDLE/LIVE — click to review with timestamps and clear. New errors flash briefly as a toast.',
+    'Fixed inputs forgetting their audio device across restarts — devices are now remembered by name, not by session-dependent number.',
+  ]},
+  { v: '1.0.2', date: '2026-07-09', items: [
+    'Fixed the window showing a stale cached UI after updates — the page now always revalidates against the running build.',
+  ]},
+  { v: '1.0.1', date: '2026-07-09', items: [
+    'Version number now visible next to the FRAUDCOM wordmark and here in Preferences.',
+    'This "What\'s new" section.',
+  ]},
+  { v: '1.0.0', date: '2026-07-09', items: [
+    'First versioned release.',
+    'Multichannel live transcription with background AI refinement — fully offline.',
+    'Adaptive per-input noise gate that learns each channel\'s own noise floor.',
+    'Voice automation: trigger phrases fire OSC cues to lighting / media / show gear.',
+    'Per-input translation to English, icons, custom colors, groups, per-event presets.',
+    'Stream watchdog with auto-restart; Dante-safe: capture pins devices to 48 kHz.',
+    'Web sharing with QR join (view-only), typed notes, pinned tabs, jump-to-latest.',
+    'Transcript auto-save to disk (toggleable) and unread-safe auto-clear.',
+  ]},
+];
+$('#changelog').innerHTML = CHANGELOG.map(c => `
+  <div class="clentry"><b>v${c.v}</b>
+    <small class="pnote" style="display:inline"> · ${c.date}</small>
+    <ul>${c.items.map(i => `<li>${i}</li>`).join('')}</ul></div>`).join('');
+$('#saveCorr').onclick = () => {
+  corrections = {};
+  $('#corrText').value.split('\n').forEach(line => {
+    const m = line.split('=>');
+    if (m.length === 2 && m[0].trim()) corrections[m[0].trim()] = m[1].trim();
+  });
+  pushLexicon();
+  $('#saveCorr').innerHTML = ui('check') + 'Saved';
+  setTimeout(() => $('#saveCorr').textContent = 'Save corrections', 1200);
+};
+$('#hwInput').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const w = e.target.value.trim();
+  if (w && !hotwords.some(x => x.toLowerCase() === w.toLowerCase())) hotwords.push(w);
+  e.target.value = '';
+  renderHw(); buildHwRegex(); pushLexicon();
+});
+
+// Feed retention: sweep messages older than the configured window —
+// but never unseen ones (arrived on a tab you haven't viewed since).
+setInterval(() => {
+  const mins = +(localStorage.getItem('vox.retention') || 0);
+  if (!mins) return;
+  const cutoff = Date.now() / 1000 - mins * 60;
+  $$('#feed .msg').forEach(el => {
+    if (!el.dataset.seen) return;
+    const ts = +el.dataset.ts || 0;
+    if (ts && ts < cutoff && !el.classList.contains('partial')) el.remove();
+  });
+}, 30000);
+
+function highlight(text) {
+  // Match on the RAW text and escape the pieces. Matching on already-escaped
+  // text let a hot word like "amp" or "39" land inside "&amp;" / "&#39;" and
+  // print broken entities.
+  const raw = String(text ?? '');
+  if (!hwRegex) return { html: esc(raw), hit: false };
+  let html = '', last = 0, hit = false;
+  for (const m of raw.matchAll(hwRegex)) {
+    html += esc(raw.slice(last, m.index)) + `<mark>${esc(m[0])}</mark>`;
+    last = m.index + m[0].length;
+    hit = true;
+  }
+  return { html: html + esc(raw.slice(last)), hit };
+}
+
+/* ================= transcript ================= */
+const nearBottom = () => feed.scrollHeight - feed.scrollTop - feed.clientHeight < 120;
+
+/* feed zoom — persisted per device so a far-away screen can stay readable */
+let zoom = parseFloat(localStorage.getItem('vox.zoom')) || 1;
+function setZoom(z) {
+  const stick = nearBottom();
+  zoom = Math.min(3, Math.max(0.7, Math.round(z * 20) / 20));
+  feed.style.setProperty('--zoom', zoom);
+  $('#zoomPct').textContent = Math.round(zoom * 100) + '%';
+  localStorage.setItem('vox.zoom', zoom);
+  if (stick) feed.scrollTop = feed.scrollHeight;
+}
+$('#zoomIn').onclick = () => setZoom(zoom + 0.15);
+$('#zoomOut').onclick = () => setZoom(zoom - 0.15);
+$('#zoomPct').onclick = () => setZoom(1);
+feed.addEventListener('wheel', e => {
+  if (!e.ctrlKey) return;
+  e.preventDefault();
+  setZoom(zoom + (e.deltaY < 0 ? 0.15 : -0.15));
+}, { passive: false });
+setZoom(zoom);
+
+function makeMsg(key, name, ts, partial=false) {
+  $('#empty')?.remove();
+  const el = document.createElement('div');
+  el.className = 'msg' + (partial ? ' partial' : '');
+  el.dataset.key = key;
+  el.dataset.ts = ts;
+  const ico = route[key] && route[key].icon;
+  const avContent = ico
+    ? (iconSvg(ico, 20, avatarText(key)) || `<span class="emj">${esc(ico)}</span>`)
+    : esc(initials(name));
+  el.innerHTML = `
+    <div class="avatar" style="background:${colorFor(key)};color:${avatarText(key)}" title="Solo ${esc(name)}">${avContent}</div>
+    <div class="body">
+      <div class="meta"><span class="who" style="color:${colorFor(key)}">${esc(name)}</span>
+        <span class="when">${fmtTime(ts)}${/^\d+:\d+$/.test(key) ? ' · ch ' + (key.split(':')[1] * 1 + 1) : ''}</span></div>
+      <div class="bubble"></div>
+    </div>`;
+  el.querySelector('.avatar').onclick =
+  el.querySelector('.who').onclick = () => soloChannel(key, name);
+  el.style.display = visibleIn(key, activeTab) ? '' : 'none';
+  feed.appendChild(el);
+  return el;
+}
+
+// A viewer link locked to one group never shows (or alerts on) other channels.
+const outsideLock = key => lockedTab && !groupsOf(key).includes(lockedTab);
+
+function onPartial(m) {
+  if (outsideLock(m.channel)) return;
+  names[m.channel] = m.name;
+  let el = partials[m.channel];
+  if (!el) { el = makeMsg(m.channel, m.name, m.ts, true); partials[m.channel] = el; }
+  el.querySelector('.bubble').innerHTML = highlight(m.text).html;
+  el.style.display =
+    (visibleIn(m.channel, activeTab) && msgMatches(el)) ? '' : 'none';
+  if (el.style.display !== 'none' && nearBottom()) feed.scrollTop = feed.scrollHeight;
+}
+
+function onFinal(m) {
+  if (outsideLock(m.channel)) return;
+  names[m.channel] = m.name;
+  lastHeard[m.channel] = m.ts;
+  const heard = document.querySelector(`[data-heard="${CSS.escape(m.channel)}"]`);
+  if (heard) heard.textContent = heardText(m.channel);
+  const stick = nearBottom();
+  if (partials[m.channel]) { partials[m.channel].remove(); delete partials[m.channel]; }
+
+  const { html, hit } = highlight(m.text);
+  const prev = lastFinal[m.channel];
+  let el;
+  if (prev && m.ts - prev.ts < 12 && prev.el === feed.lastElementChild) {
+    const p = document.createElement('p'); p.innerHTML = html;
+    if (m.id) p.dataset.mid = m.id;
+    prev.el.querySelector('.bubble').appendChild(p);
+    prev.ts = m.ts; el = prev.el;
+    el.dataset.ts = m.ts;
+  } else {
+    el = makeMsg(m.channel, m.name, m.ts);
+    el.querySelector('.bubble').innerHTML =
+      `<p${m.id ? ` data-mid="${esc(m.id)}"` : ''}>${html}</p>`;
+    lastFinal[m.channel] = { el, ts: m.ts };
+  }
+  if (hit) el.classList.add('hashot');
+  el.style.display =
+    (visibleIn(m.channel, activeTab) && msgMatches(el)) ? '' : 'none';
+
+  const line = `[${fmtTime(m.ts)}] ${m.name}: `;
+  transcript.push(line + m.text);
+  if (m.id) tIndex[m.id] = { i: transcript.length - 1, prefix: line };
+
+  const hidden = !visibleIn(m.channel, activeTab);
+  if (!hidden) el.dataset.seen = '1';
+  if (hidden) {
+    // every tab the line belongs on (its groups, or All for an ungrouped
+    // input) gets an unread count, except the one being looked at
+    const tabs = groupsOf(m.channel).length ? groupsOf(m.channel) : ['all'];
+    let bumped = false;
+    tabs.forEach(tab => {
+      if (tab !== activeTab) { unread[tab] = (unread[tab] || 0) + 1; bumped = true; }
+    });
+    if (bumped) renderTabs();
+    notify(m, hit);
+  } else if (hit) {
+    notify(m, true);
+  }
+  if (!hidden && stick) feed.scrollTop = feed.scrollHeight;
+  else if (!hidden) bumpJump();     // visible tab but scrolled up
+}
+
+function onRefine(m) {
+  if (!m.id) return;
+  const p = document.querySelector(`#feed [data-mid="${CSS.escape(m.id)}"]`);
+  if (p) {
+    const { html, hit } = highlight(m.text);
+    p.innerHTML = (m.translated
+      ? `<span class="xlate" title="Translated to English">${ui('globe')}</span> ` : '') + html;
+    if (hit) p.closest('.msg')?.classList.add('hashot');
+  }
+  const t = tIndex[m.id];
+  if (t && transcript[t.i] != null)
+    transcript[t.i] = t.prefix + (m.translated ? '[EN] ' : '') + m.text;
+}
+
+function onNote(m) {
+  $('#empty')?.remove();
+  const el = document.createElement('div');
+  el.className = 'msg note';
+  el.dataset.key = 'note';
+  el.dataset.ts = m.ts;
+  el.dataset.seen = '1';
+  const kind = m.name === 'Marker' ? 'Marker' : 'Note';
+  el.innerHTML = `
+    <div class="avatar noteav" title="${kind}">${ui(kind === 'Marker' ? 'flag' : 'pencil')}</div>
+    <div class="body">
+      <div class="meta"><span class="who" style="color:var(--dim)">${kind}</span>
+        <span class="when">${fmtTime(m.ts)}</span></div>
+      <div class="bubble">${esc(m.text)}</div>
+    </div>`;
+  feed.appendChild(el);
+  transcript.push(`[${fmtTime(m.ts)}] ${kind.toUpperCase()}: ${m.text}`);
+  if (nearBottom()) feed.scrollTop = feed.scrollHeight;
+  else bumpJump();
+}
+
+let flashTimer = null;
+// repeats > 1: show the message that many times, each for `secs`, with a
+// short dark gap between (OSC flash's optional repeat count).
+// Flash colors. The first four are theme colors (kept for old rules); the
+// rest are fixed so they look the same in light and dark themes. A rule may
+// also hold a custom "#rrggbb". Text is white or near-black, whichever reads.
+const FLASH_COLORS = {
+  danger: ['Red', 'var(--danger)'],   warn: ['Amber', 'var(--warn)'],
+  ok: ['Green', 'var(--ok)'],         c1: ['Cyan', 'var(--c1)'],
+  blue: ['Blue', '#1d4ed8'],          purple: ['Purple', '#7c3aed'],
+  magenta: ['Magenta', '#c026d3'],    pink: ['Pink', '#ec4899'],
+  orange: ['Orange', '#ea580c'],      yellow: ['Yellow', '#facc15'],
+  lime: ['Lime', '#84cc16'],          teal: ['Teal', '#0f766e'],
+  white: ['White', '#ffffff'],        gray: ['Gray', '#6b7280'],
+  black: ['Black', '#000000'],
+};
+function flashColor(color) {
+  const hex = okHex(color) || (FLASH_COLORS[color] && FLASH_COLORS[color][1].startsWith('#')
+                               ? FLASH_COLORS[color][1] : null);
+  const bg = hex || (FLASH_COLORS[color] || FLASH_COLORS.danger)[1];
+  let fg = '#fff';
+  if (hex) {
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16),
+          b = parseInt(hex.slice(5, 7), 16);
+    if (0.299 * r + 0.587 * g + 0.114 * b > 150) fg = '#111';
+  }
+  return { bg, fg };
+}
+function showFlash(text, color, secs, repeats = 1) {
+  if (!text) return;
+  const el = $('#flash');
+  el.querySelector('b').textContent = text;
+  // only palette names or a well-formed #rrggbb reach the style
+  // (automations.json, OSC and the API are all outside data)
+  const c = flashColor(color);
+  el.style.background = c.bg;
+  el.querySelector('b').style.color = c.fg;
+  el.querySelector('b').style.textShadow = c.fg === '#fff' ? '' : 'none';
+  el.hidden = false;
+  clearTimeout(flashTimer);
+  const left = Math.max(1, Math.min(20, Math.round(repeats) || 1)) - 1;
+  flashTimer = setTimeout(() => {
+    el.hidden = true;
+    if (left) flashTimer = setTimeout(() => showFlash(text, color, secs, left), 400);
+  }, Math.max(0.5, Math.min(30, secs || 4)) * 1000);
+}
+function onFlash(m) {
+  const l = m.levels || {};
+  showFlash(m.text, l.color || 'danger', l.secs || 4, l.repeats || 1);
+}
+
+// Screen commands from OSC and the remote API: select / clear / mark read
+// a channel, scroll, text size.
+function onUi(m) {
+  const k = m.channel;
+  if (m.action === 'select' && k) soloChannel(k, m.name || names[k] || 'channel');
+  else if (m.action === 'clear') {
+    $$('#feed .msg').forEach(el => {
+      if (k === 'all' ? el.dataset.key !== 'note' : el.dataset.key === k) el.remove();
+    });
+    if (k === 'all') { lastFinal = {}; partials = {}; }
+    else { delete lastFinal[k]; delete partials[k]; }
+  } else if (m.action === 'mark') {
+    $$('#feed .msg').forEach(el => {
+      if (k === 'all' || el.dataset.key === k) el.dataset.seen = '1';
+    });
+    if (k === 'all') unread = {};
+    else (groupsOf(k).length ? groupsOf(k) : ['all']).forEach(t => { unread[t] = 0; });
+    renderTabs();
+  } else if (m.action === 'scroll') {
+    if (m.dir === 'current') $('#jumpBtn').click();
+    else feed.scrollBy({ top: (m.dir === 'up' ? -1 : 1) * feed.clientHeight * 0.8 });
+  } else if (m.action === 'font') setZoom(zoom + (m.dir === 'increase' ? 0.15 : -0.15));
+}
+
+function onAutomation(m) {
+  const box = document.createElement('div');
+  box.className = 'toast auto';
+  box.innerHTML = `<div class="t1">${ui('bolt')} Automation fired</div>
+                   <div class="t2">"${esc(m.name)}" → ${esc(m.text)}</div>`;
+  $('#toasts').appendChild(box);
+  setTimeout(() => box.remove(), 4000);
+  while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
+}
+
+function onOscIn(m) {
+  const box = document.createElement('div');
+  box.className = 'toast auto';
+  box.innerHTML = `<div class="t1">${ui('bolt')} OSC received</div>
+                   <div class="t2">${esc(m.text)}</div>`;
+  $('#toasts').appendChild(box);
+  setTimeout(() => box.remove(), 4000);
+  while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
+}
+
+// The remote API changed inputs/groups/presets on the server:
+// take the server's roster (a viewer re-reads its safe /view instead).
+async function onRosterChanged() {
+  try {
+    if (VIEWER) {
+      const v = await (await fetch('/view')).json();
+      groups = v.groups || []; pins = v.pins || [];
+      people = Object.entries(v.channels || {}).map(([k, c]) => {
+        const [di, ch] = k.split(':').map(Number);
+        return { ...c, di, ch };
+      });
+      rebuildRoute(); renderTabs(); return;
+    }
+    const r = await (await fetch('/roster')).json();
+    people = Array.isArray(r.people) ? r.people : [];
+    groups = Array.isArray(r.groups) ? r.groups : [];
+    if (Array.isArray(r.pins)) pins = r.pins;
+    localStorage.setItem('vox.people', JSON.stringify(people));
+    localStorage.setItem('vox.groups', JSON.stringify(groups));
+    localStorage.setItem('vox.pins', JSON.stringify(pins));
+    renderAll(); applyFilter();
+  } catch {}
+}
+
+function onMute(m) {
+  if (m.text === 'on') muted.add(m.channel); else muted.delete(m.channel);
+  renderInputs();
+}
+
+function onHealth(m) {
+  const el = $('#health');
+  const bad = m.lag >= 2 || m.backlog >= 32 || m.dropped > 0 || m.skipped > 0;
+  el.textContent = `CPU ${m.cpu}% · lag ${m.lag}s · Whisper ${m.backlog}` +
+    (m.dropped ? ' · audio dropped' : '') +
+    (m.skipped ? ` · ${m.skipped} line${m.skipped === 1 ? '' : 's'} unrefined` : '');
+  el.classList.toggle('warn', bad);
+  el.hidden = !running;
+}
+
+function onRetract(m) {
+  if (!m.id) return;
+  const p = document.querySelector(`#feed [data-mid="${CSS.escape(m.id)}"]`);
+  if (p) {
+    const msg = p.closest('.msg');
+    const bubble = p.parentElement;
+    p.remove();
+    if (bubble && !bubble.querySelector('p')) msg?.remove();
+  }
+  const t = tIndex[m.id];
+  if (t && transcript[t.i] != null) transcript[t.i] = null;
+}
+
+function onLevels(m) {
+  for (const [k, v] of Object.entries(m.levels || {})) {
+    const bar = document.querySelector(`[data-meter="${k}"]`);
+    if (bar) bar.style.width = Math.round(v * 100) + '%';
+  }
+  for (const [k, g] of Object.entries(m.gates || {})) {
+    const bar = document.querySelector(`[data-meter="${k}"]`);
+    const meter = bar && bar.parentElement;
+    if (!meter) continue;
+    if (g === null) meter.removeAttribute('data-gate');
+    else meter.setAttribute('data-gate', g ? 'open' : 'closed');
+  }
+}
+
+function onChanState(m) {
+  (m.channel || '').split(',').forEach(k => {
+    const bar = document.querySelector(`[data-meter="${CSS.escape(k)}"]`);
+    const row = bar && bar.closest('.inputrow');
+    if (row) {
+      row.classList.toggle('down', m.text === 'down');
+      row.title = m.text === 'down' ? 'Audio stream lost — restarting…' : '';
+    }
+  });
+}
+
+/* ================= notifications ================= */
+let audioCtx = null;
+function chime(hot) {
+  if (!$('#soundAlerts').checked) return;
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t = audioCtx.currentTime;
+  [[hot ? 1175 : 880, 0], [hot ? 1568 : 660, 0.09]].forEach(([f, dt]) => {
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.frequency.value = f; o.type = 'sine';
+    g.gain.setValueAtTime(0.0001, t + dt);
+    g.gain.exponentialRampToValueAtTime(0.12, t + dt + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.25);
+    o.connect(g).connect(audioCtx.destination);
+    o.start(t + dt); o.stop(t + dt + 0.3);
+  });
+}
+
+function notify(m, hot) {
+  chime(hot);
+  const box = document.createElement('div');
+  box.className = 'toast' + (hot ? ' hot' : '');
+  const where = groupsOf(m.channel).length ? ` · ${groupsOf(m.channel).join(', ')}` : '';
+  box.innerHTML = `<div class="t1">${ui(hot ? 'bolt' : 'dot')} ${esc(m.name)}${esc(where)} is talking</div>
+                   <div class="t2">${esc(m.text)}</div>`;
+  box.onclick = () => {
+    const g = groupOf(m.channel);
+    setTab(g || 'solo:' + m.channel);
+    box.remove();
+  };
+  $('#toasts').appendChild(box);
+  setTimeout(() => box.remove(), 6000);
+  while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
+}
+
+/* ================= start/stop & websocket ================= */
+async function startCapture() {
+  const btn = $('#startBtn');
+  // Re-read the device list first, so an interface or Dante Virtual
+  // Soundcard started after FraudCom is picked up without a manual rescan.
+  btn.disabled = true; btn.textContent = 'Starting…';
+  try { await loadDevices(); } catch {}
+  btn.disabled = false; btn.textContent = 'Start listening';
+  // selectedDevices() builds the list from only the inputs that can actually
+  // start — it skips any with an offline device or a bad channel, and records
+  // same-channel duplicates in routeConflicts. One dead mic no longer blocks
+  // the rest: we launch what works and tell you what stayed behind.
+  const devices = selectedDevices();
+  const skipped = people
+    .map(p => { const w = routeProblem(p); return w ? `${p.name || 'unnamed'} (${w})` : null; })
+    .filter(Boolean)
+    .concat(routeConflicts.map(p => `${p.name || 'unnamed'} (shares a channel with another input)`));
+
+  if (!devices.length) {
+    if (people.length) return showErr('Nothing can start yet — ' +
+      (skipped.join(' · ') || 'check each input’s device and channel') +
+      '. Reconnect the device, then rescan devices.');
+    return showErr('Add at least one input (or load a preset) before starting.');
+  }
+
+  btn.disabled = true; btn.textContent = 'Starting…';
+  try {
+    const res = await fetch('/start', { method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ devices }) });
+    const j = await res.json();
+    if (!j.ok) { setRunning(false); showErr(j.error); }
+    else {
+      setRunning(true);
+      const n = devices.reduce((a, d) => a + d.channels.length, 0);
+      if (skipped.length)
+        showErr(`Listening on ${n} input${n === 1 ? '' : 's'} — but these didn’t start: ` +
+          skipped.join(' · ') + '. Reconnect the device and rescan devices, then Stop and Start to bring them in.');
+    }
+  } catch {
+    setRunning(false);
+    showErr('Server not reachable — is it still running? Relaunch FraudCom.');
+  }
+  btn.disabled = false;
+}
+
+$('#startBtn').onclick = async () => {
+  const btn = $('#startBtn');
+  if (running) {
+    btn.disabled = true;
+    try {
+      const r = await fetch('/stop', {method:'POST'});
+      if (!r.ok) throw new Error('stop failed');   // never show IDLE while capture may continue
+      setRunning(false);
+    } catch { showErr('Stop didn’t complete — the server didn’t confirm. Try again, or relaunch FraudCom.'); }
+    btn.disabled = false;
+    return;
+  }
+  startCapture();
+};
+
+function setRunning(on) {
+  running = on;
+  $('#startBtn').textContent = on ? 'Stop' : 'Start listening';
+  $('#startBtn').classList.toggle('on', on);
+  $('#statusDot').classList.toggle('live', on);
+  $('#statusText').textContent = on ? 'LIVE' : 'IDLE';
+  if (!on) $$('.meter i').forEach(b => b.style.width = '0%');
+  if (!on) $('#health').hidden = true;
+  $$('[data-heard]').forEach(el => el.textContent = heardText(el.dataset.heard));
+}
+let errLog = [];
+function renderErrBadge() {
+  $('#errBadge').hidden = !errLog.length;
+  $('#errCount').textContent = errLog.length;
+}
+function showErrLog() {
+  openModal('Errors', errLog.length
+    ? `<div class="mlist">${errLog.slice().reverse().map(e =>
+        `<div class="errline"><small>${fmtTime(e.ts)}</small>${esc(e.text)}</div>`
+      ).join('')}</div>`
+    : '<div class="mnote">No errors.</div>',
+    () => { errLog = []; renderErrBadge(); }, 'Clear all');
+}
+$('#errBadge').onclick = showErrLog;
+function showErr(msg) {
+  if (!msg) return;                    // old "clear" calls are no-ops now
+  errLog.push({ ts: Date.now() / 1000, text: msg });
+  renderErrBadge();
+  const box = document.createElement('div');
+  box.className = 'toast err';
+  box.innerHTML = `<div class="t1">${ui('warn')} Error</div><div class="t2">${esc(msg)}</div>`;
+  box.onclick = () => { showErrLog(); box.remove(); };
+  $('#toasts').appendChild(box);
+  setTimeout(() => box.remove(), 7000);
+  while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
+}
+// Neutral success toast — not an error, not logged to the ⚠ badge.
+function showOk(msg) {
+  if (!msg) return;
+  const box = document.createElement('div');
+  box.className = 'toast ok';
+  box.innerHTML = `<div class="t1">${ui('check')} ${esc(msg)}</div>`;
+  $('#toasts').appendChild(box);
+  setTimeout(() => box.remove(), 5000);
+  while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove();
+}
+
+function connectWS() {
+  const ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === 'partial') onPartial(m);
+    else if (m.type === 'final') onFinal(m);
+    else if (m.type === 'refine') onRefine(m);
+    else if (m.type === 'retract') onRetract(m);
+    else if (m.type === 'note') onNote(m);
+    else if (m.type === 'automation') onAutomation(m);
+    else if (m.type === 'flash') onFlash(m);
+    else if (m.type === 'chanstate') onChanState(m);
+    else if (m.type === 'levels') onLevels(m);
+    else if (m.type === 'health') onHealth(m);
+    else if (m.type === 'mute') onMute(m);
+    else if (m.type === 'oscin') onOscIn(m);
+    else if (m.type === 'ui') onUi(m);
+    else if (m.type === 'roster') onRosterChanged();
+    else if (m.type === 'lexicon') loadLexicon().then(renderHw).catch(() => {});
+    else if (m.type === 'automations') loadAutomations();
+    else if (m.type === 'status') setRunning(m.text === 'listening');
+    else if (m.type === 'warn') showErr(m.text);
+  };
+  ws.onclose = () => setTimeout(connectWS, 1500);
+}
+
+// The ⋯ menu closes after any choice, or a click anywhere else.
+document.addEventListener('click', e => {
+  const menu = $('#moreMenu');
+  if (menu.open && (!menu.contains(e.target) || e.target.closest('.menupop button')))
+    menu.open = false;
+});
+$('#clearBtn').onclick = () => {
+  openModal('Clear the feed?', `<div class="mnote lg">
+      Removes every line from this screen. The transcript saved on disk is
+      not affected.</div>`, () => {
+    feed.innerHTML = ''; transcript = []; lastFinal = {}; partials = {};
+    tIndex = {}; unread = {}; renderTabs();
+  }, 'Clear');
+};
+$('#openTx2').onclick = () =>
+  fetch('/open-transcripts', { method: 'POST' }).catch(() => {});
+function dropMarker() {
+  fetch('/note', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ marker: true }) })
+    .then(r => { if (!r.ok) throw new Error(); })
+    .catch(() => showErr('Could not add a marker.'));
+}
+$('#markBtn').onclick = dropMarker;
+$('#dlBtn').onclick = () => {
+  const blob = new Blob([transcript.filter(Boolean).join('\n')], { type:'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `transcript-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.txt`;
+  a.click();
+};
+$('#refreshBtn').onclick = loadDevices;
+
+/* ================= typed notes ================= */
+$('#noteBtn').onclick = () => {
+  openModal('Add note', `
+    <div class="mfield"><label for="noteText">Note — goes in the feed and
+      the saved transcript</label>
+      <input type="text" id="noteText"
+             placeholder="e.g. Song 3 starts — FOH clipping fixed"></div>`,
+    () => {
+      const t = $('#noteText').value.trim();
+      if (!t) { $('#noteText').focus(); return false; }
+      fetch('/note', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: t }) }).catch(() => {});
+    }, 'Add');
+  $('#noteText').focus();
+  $('#noteText').addEventListener('keydown', e => {
+    if (e.key === 'Enter') $('#mOk').click();
+  });
+};
+
+/* ================= jump to latest ================= */
+let unseenBelow = 0;
+feed.addEventListener('scroll', () => {
+  if (nearBottom()) { unseenBelow = 0; $('#jumpBtn').hidden = true; }
+});
+function bumpJump() {
+  unseenBelow++;
+  $('#jumpBtn').innerHTML =
+    `${ui('down')} Jump to latest<span class="jb">${unseenBelow}</span>`;
+  $('#jumpBtn').hidden = false;
+}
+$('#jumpBtn').onclick = () => {
+  feed.scrollTop = feed.scrollHeight;
+  unseenBelow = 0;
+  $('#jumpBtn').hidden = true;
+};
+
+/* ================= voice automation (OSC) ================= */
+async function loadAutomations() {
+  try { AUTOS = await (await fetch('/automations')).json(); }
+  catch { AUTOS = []; }
+  if (!Array.isArray(AUTOS)) AUTOS = [];       // viewers get a 403 object
+  // 1.9.6 saved its RIVAGE shortcut as r.rivage (and quoted the scene as
+  // "5.00", which today's argument parser reads as a number): convert those
+  // to r.console and rebuild the OSC from the console table.
+  let migrated = false;
+  AUTOS.forEach(r => {
+    if (r.rivage && !r.console) {
+      const o = r.rivage;
+      r.console = { type: 'rivage', target: o.target || 'inch', num: o.num ?? 1,
+                    second: o.mix ?? 1, state: o.state || 'on', scene: o.scene || '1.00' };
+      delete r.rivage;
+      const b = CONSOLES.rivage.build(r.console);
+      r.address = b.address; r.args = b.args; r.action = 'osc'; r.proto = 'udp';
+      migrated = true;
+    }
+  });
+  if (migrated) { saveAutos(); return; }
+  renderAutos();
+}
+function saveAutos() {
+  fetch('/automations', { method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rules: AUTOS }) }).catch(() => {});
+  renderAutos();
+}
+function renderAutos() {
+  const box = $('#autoList');
+  if (!box) return;
+  box.innerHTML = AUTOS.length ? ''
+    : '<small class="pnote">No automations yet — add one to fire OSC, MIDI or console cues by voice.</small>';
+  AUTOS.forEach((r, i) => {
+    const row = document.createElement('div');
+    row.className = 'autorow';
+    row.innerHTML = `
+      <input type="checkbox" ${r.enabled !== false ? 'checked' : ''} title="Enabled">
+      <div class="info"><b>${r.name ? esc(r.name) + ' · ' : ''}${
+          r.trigger === 'osc' ? 'OSC ' + esc(r.osc_pattern || '')
+        : r.trigger === 'webhook' ? 'webhook ' + esc(r.webhook_path || '')
+        : '“' + esc((r.keywords || [r.phrase || '']).join('” / “')) + '”'}</b>
+        <small>${Array.isArray(r.actions)
+            ? `${r.actions.length} action${r.actions.length === 1 ? '' : 's'} (made through the API: ${esc(r.actions.map(a => a.type).join(', '))})`
+            : r.action === 'flash'
+            ? 'flash: ' + esc(r.flash_text || r.phrase || '')
+            : r.action === 'midi' ? 'MIDI ' + esc(midiSummary(r))
+            : r.console && CONSOLES[r.console.type] ? esc(consoleSummary(r))
+            : esc(r.address || '') + ' → ' + esc(r.host || '') + ':' + esc(String(r.port || ''))}
+          ${r.trigger && r.trigger !== 'phrase' ? '' : '· ' + (r.channel ? esc(names[r.channel] || r.channel) : 'any channel')}</small></div>
+      <button class="iedit" title="${Array.isArray(r.actions) ? 'Made through the API — change it there' : 'Edit'}"
+        ${Array.isArray(r.actions) || r.trigger === 'webhook' ? 'disabled style="opacity:.3"' : ''}>${ui('pencil')}</button>
+      <button class="pdel" title="Delete">${ui('x')}</button>`;
+    row.querySelector('input').onchange = e => {
+      r.enabled = e.target.checked; saveAutos();
+    };
+    row.querySelector('.iedit').onclick = () => {
+      if (!Array.isArray(r.actions) && r.trigger !== 'webhook') autoModal(r);
+    };
+    row.querySelector('.pdel').onclick = () => {
+      AUTOS.splice(i, 1); saveAutos();
+    };
+    box.appendChild(row);
+  });
+}
+/* ---- console shortcuts: build OSC for a console from menus. A rule made
+   this way is saved as a normal OSC rule plus r.console = {type, ...}, so
+   the engine (and the Remote API) see plain OSC. ---- */
+const CONSOLES = {
+  rivage: {
+    label: 'Yamaha RIVAGE console', short: 'RIVAGE', port: 49900,
+    hostLabel: 'Console DSP Engine IP',
+    // Yamaha "RIVAGE PM OSC Specifications" v1.0.2: firmware V5.00+,
+    // UDP 49900, numbering starts at 1, 1 = ON.
+    targets: {
+      inch:  { label: 'Input channel', max: 288, path: 'InCh' },
+      mix:   { label: 'Mix',           max: 72,  path: 'Mix' },
+      mtrx:  { label: 'Matrix',        max: 36,  path: 'Mtrx' },
+      st:    { label: 'Stereo',        max: 4,   path: 'St' },
+      dca:   { label: 'DCA',           max: 24,  path: 'DCA' },
+      send:  { label: 'Input → Mix send', max: 288, second: 'Mix', secondMax: 72 },
+      scene: { label: 'Recall scene', scene: true },
+    },
+    build(v) {
+      const T = this.targets[v.target] || this.targets.inch;
+      if (T.scene) return { address: '/yosc:req/ssrecallt_ex',
+        args: `MIXER:Lib/Scene s:${(+v.scene || 1).toFixed(2)}`, check: true };
+      const x = clampN(v.num, 1, T.max), on = v.state === 'off' ? 0 : 1;
+      if (T.second) return { address:
+        `/yosc:req/set/MIXER:Current/InCh/ToMix/On/${x}/${clampN(v.second, 1, T.secondMax)}`,
+        args: String(on) };
+      return { address: `/yosc:req/set/MIXER:Current/${T.path}/Fader/On/${x}/1`,
+               args: String(on) };
+    },
+    help: `On the console: SETUP → NETWORK → DSP ENGINE IP SETTING, turn on
+      ENABLE (firmware V5.00 or later). Host = that DSP Engine IP, port 49900.`,
+    checkNote: 'Scene recall uses a slightly different format in Yamaha’s document — test it before a show.',
+  },
+  digico: {
+    label: 'DiGiCo console (SD / Quantum)', short: 'DiGiCo', port: 7001,
+    hostLabel: 'Console IP (External Control “Local IP”)',
+    // DiGiCo Pad command set (External Control), as used by the open-source
+    // Bitfocus Companion DiGiCo module: no prefix, 1-based, mute/send_on
+    // are floats 0/1. Channel "ON" = unmuted.
+    targets: {
+      inch:  { label: 'Input channel', max: 999, path: 'Input_Channels', mute: true },
+      aux:   { label: 'Aux',           max: 999, path: 'Aux_Outputs',    mute: true },
+      grp:   { label: 'Group',         max: 999, path: 'Group_Outputs',  mute: true },
+      mtx:   { label: 'Matrix',        max: 999, path: 'Matrix_Outputs', mute: true },
+      cg:    { label: 'Control Group', max: 36,  path: 'Control_Groups', mute: true },
+      send:  { label: 'Input → Aux send', max: 999, second: 'Aux', secondMax: 999 },
+      snext: { label: 'Snapshot: fire next',     fixed: '/Snapshots/Fire_Next_Snapshot' },
+      sprev: { label: 'Snapshot: fire previous', fixed: '/Snapshots/Fire_Prev_Snapshot' },
+      ssel:  { label: 'Snapshot: fire selected', fixed: '/Snapshots/Fire_Selected_Snapshot' },
+      macro: { label: 'Macro: recall', max: 9999, path: 'Macros', check: true, noState: true },
+    },
+    build(v) {
+      const T = this.targets[v.target] || this.targets.inch;
+      if (T.fixed) return { address: T.fixed, args: '' };
+      const x = clampN(v.num, 1, T.max), on = v.state !== 'off';
+      if (v.target === 'macro')
+        return { address: `/Macros/Recall_Macro/${x}`, args: '', check: true };
+      if (T.second) return { address:
+        `/Input_Channels/${x}/Aux_Send/${clampN(v.second, 1, T.secondMax)}/send_on`,
+        args: on ? 'f:1' : 'f:0' };
+      return { address: `/${T.path}/${x}/mute`, args: on ? 'f:0' : 'f:1' };
+    },
+    help: `On the console: Setup → External Control → Enable External Control: YES.
+      Add Device → DiGiCo Pad, IP = this Mac, set Send/Rcv ports (Rcv is the
+      port here), Enabled. Load the Commands Allowed file (SD: iPadv2sd8-9-11-12,
+      Quantum: ipad_q3). Host = the console’s Local IP. ON = unmuted.`,
+    checkNote: 'Macro numbers follow the console’s macro list — test it before a show.',
+  },
+};
+const clampN = (n, lo, hi) => Math.max(lo, Math.min(hi, Math.round(+n || lo)));
+function consoleSummary(r) {
+  const C = CONSOLES[r.console && r.console.type]; if (!C) return '';
+  const v = r.console, T = C.targets[v.target] || {};
+  let what = T.label || '';
+  if (T.scene) what += ' ' + (+v.scene || 1).toFixed(2);
+  else if (!T.fixed) {
+    what += ' ' + (v.num || 1) + (T.second ? ` → ${T.second} ${v.second || 1}` : '');
+    if (!T.noState) what += v.state === 'off' ? ' OFF' : ' ON';
+  }
+  return `${C.short}: ${what} → ${r.host || ''}`;
+}
+function midiSummary(r) {
+  const port = r.midi_port || 'FraudCom (virtual)';
+  const t = r.midi_type || 'note';
+  if (t === 'raw') return (r.midi_raw || '').toUpperCase() + ' → ' + port;
+  const lab = { note: 'Note', cc: 'CC', program: 'Program' }[t] || t;
+  const val = (t === 'program') ? ''
+    : ' = ' + (r.midi_val === '' || r.midi_val == null ? 127 : r.midi_val);
+  return `Ch ${r.midi_channel || 1} ${lab} ${r.midi_num ?? 0}${val} → ${port}`;
+}
+async function fillMidiPorts(sel, current) {
+  let j = { ports: [], virtual: true, error: null };
+  try { j = await (await fetch('/midi/ports')).json(); } catch {}
+  if (!j || !Array.isArray(j.ports)) j = { ports: [], virtual: true, error: j && j.error };
+  const opts = [];
+  if (j.virtual) opts.push(`<option value="">FraudCom (virtual port)</option>`);
+  j.ports.forEach(n => opts.push(
+    `<option value="${esc(n)}" ${n === current ? 'selected' : ''}>${esc(n)}</option>`));
+  if (current && !j.ports.includes(current))
+    opts.push(`<option value="${esc(current)}" selected>${esc(current)} (not connected)</option>`);
+  if (!opts.length) opts.push('<option value="">No MIDI outputs found</option>');
+  sel.innerHTML = opts.join('');
+  if (j.error) $('#auTestNote').textContent = 'MIDI: ' + j.error;
+}
+function autoModal(r) {
+  const isNew = !r;
+  const data = r || { id: 'a' + Date.now().toString(36), enabled: true,
+                      name: '', trigger: 'phrase', osc_pattern: '',
+                      phrase: '', channel: '', action: 'osc', proto: 'udp',
+                      host: '127.0.0.1', port: 8000, address: '/cue/1/go',
+                      args: '', flash_text: '', flash_color: 'danger',
+                      flash_secs: 4, midi_port: '', midi_type: 'note',
+                      midi_channel: 1, midi_num: 60, midi_val: 127,
+                      midi_raw: '' };
+  const cv = data.console || {};
+  const curAct = data.console && CONSOLES[data.console.type] ? data.console.type
+                 : (data.action || 'osc');
+  const chOpts = ['<option value="">Any channel</option>'].concat(
+    people.map(p => {
+      const k = `${p.di}:${p.ch}`;
+      return `<option value="${esc(k)}" ${data.channel === k ? 'selected' : ''}>
+        ${esc(p.name || k)}</option>`;
+    })).join('');
+  openModal(isNew ? 'Add automation' : 'Edit automation', `
+    <div class="mfield"><label for="auName">Name (optional — OSC can trigger it by name)</label>
+      <input type="text" id="auName" placeholder="e.g. Blackout" value="${esc(data.name || '')}"></div>
+    <div class="mfield"><label for="auTrig">Trigger</label>
+      <select id="auTrig">
+        <option value="phrase" ${data.trigger !== 'osc' ? 'selected' : ''}>A phrase is heard</option>
+        <option value="osc" ${data.trigger === 'osc' ? 'selected' : ''}>An OSC message arrives</option>
+      </select></div>
+    <div class="mfield" data-tphrase><label for="auPhrase">Trigger phrase (heard in a transcript)</label>
+      <input type="text" id="auPhrase" placeholder="e.g. black out" value="${esc(data.phrase)}"></div>
+    <div class="mfield" data-tphrase><label for="auCh">Listen on</label>
+      <select id="auCh">${chOpts}</select></div>
+    <div class="mfield" data-tosc hidden><label for="auPat">OSC address pattern</label>
+      <input type="text" id="auPat" placeholder="/msg/{channel}/{text}" value="${esc(data.osc_pattern || '')}">
+      <div class="mnote mt-s">Needs OSC input on (Preferences → Automation).
+        Wildcards: <code>*</code> any one part, <code>{go,stop}</code> either,
+        <code>[1-5]</code> a range; <code>{name}</code> captures that part for
+        the action as <code>{name}</code>.</div></div>
+    <div class="mfield"><label for="auAction">When heard, do</label>
+      <select id="auAction">
+        <option value="osc" ${curAct==='osc'?'selected':''}>Send an OSC message</option>
+        ${Object.entries(CONSOLES).map(([k, C]) =>
+          `<option value="${k}" ${curAct===k?'selected':''}>${C.label}</option>`).join('')}
+        <option value="midi" ${curAct==='midi'?'selected':''}>Send a MIDI message</option>
+        <option value="flash" ${curAct==='flash'?'selected':''}>Flash a message on screen</option>
+      </select></div>
+    <div class="mfield" data-host style="display:flex;gap:8px">
+      <span style="flex:2"><label for="auHost" id="auHostLbl">OSC host (IP)</label>
+        <input type="text" id="auHost" value="${esc(data.host)}"></span>
+      <span style="flex:1"><label for="auPort">Port</label>
+        <input type="text" id="auPort" value="${esc(String(data.port))}"></span>
+      <span style="flex:1" data-osc><label for="auProto">Transport</label>
+        <select id="auProto">
+          <option value="udp" ${data.proto !== 'tcp' ? 'selected' : ''}>UDP</option>
+          <option value="tcp" ${data.proto === 'tcp' ? 'selected' : ''}>TCP</option>
+        </select></span></div>
+    <div class="mfield" data-osc><label for="auAddr">OSC address</label>
+      <input type="text" id="auAddr" placeholder="/cue/5/go" value="${esc(data.address)}"></div>
+    <div class="mfield" data-osc><label for="auArgs">Arguments (optional)</label>
+      <input type="text" id="auArgs" placeholder='1 0.5 go "two words" true' value="${esc(data.args || '')}">
+      <div class="mnote mt-s">Space-separated; numbers go as numbers, "quotes"
+        keep spaces, <code>true</code>/<code>false</code>/<code>nil</code>/<code>bang</code>
+        are OSC types. Force a type with <code>s:42</code>, <code>i:7</code>,
+        <code>f:1</code>. QLab listens on TCP 53000.</div></div>
+    <div class="mnote mt-s" data-vars>Variables for the address, arguments and flash
+      text: <code>{value}</code> (the matched words, or the first OSC argument),
+      <code>{source.channel}</code>, <code>{address}</code>, <code>{arg1}</code>…,
+      <code>{1}</code>…, and any <code>{name}</code> captured by the pattern.</div>
+    <div class="mfield" data-console hidden style="display:flex;gap:8px;flex-wrap:wrap">
+      <span style="flex:2;min-width:150px"><label for="cvTarget">Control</label>
+        <select id="cvTarget"></select></span>
+      <span style="flex:1" data-cv-num><label for="cvNum" id="cvNumLbl">Number</label>
+        <input type="text" id="cvNum" value="${esc(String(cv.num ?? 1))}"></span>
+      <span style="flex:1" data-cv-second><label for="cvSecond" id="cvSecondLbl">Mix</label>
+        <input type="text" id="cvSecond" value="${esc(String(cv.second ?? 1))}"></span>
+      <span style="flex:1" data-cv-state><label for="cvState">Turn</label>
+        <select id="cvState">
+          <option value="on" ${cv.state !== 'off' ? 'selected' : ''}>ON</option>
+          <option value="off" ${cv.state === 'off' ? 'selected' : ''}>OFF</option>
+        </select></span>
+      <span style="flex:1" data-cv-scene><label for="cvScene">Scene</label>
+        <input type="text" id="cvScene" placeholder="5.00" value="${esc(String(cv.scene ?? '1.00'))}"></span></div>
+    <div class="mfield" data-console hidden>
+      <div class="mnote" id="cvPreview" style="font-family:var(--mono);word-break:break-all"></div>
+      <div class="mnote mt-s" id="cvHelp"></div>
+      <div class="mnote mt-s" id="cvCheck" hidden></div></div>
+    <div class="mfield" data-midi hidden><label for="auMidiPort">MIDI output (the FraudCom virtual port shows up as a MIDI input in QLab, Pro Tools, etc.)</label>
+      <select id="auMidiPort"><option value="">Loading…</option></select></div>
+    <div class="mfield" data-midi hidden style="display:flex;gap:8px">
+      <span style="flex:2"><label for="auMidiType">Message</label>
+        <select id="auMidiType">
+          <option value="note" ${(data.midi_type||'note')==='note'?'selected':''}>Note</option>
+          <option value="cc" ${data.midi_type==='cc'?'selected':''}>Control Change (CC)</option>
+          <option value="program" ${data.midi_type==='program'?'selected':''}>Program Change</option>
+          <option value="raw" ${data.midi_type==='raw'?'selected':''}>Raw / MMC / SysEx (hex)</option>
+        </select></span>
+      <span style="flex:1" data-midi-std><label for="auMidiCh">Channel (1–16)</label>
+        <input type="text" id="auMidiCh" value="${esc(String(data.midi_channel ?? 1))}"></span></div>
+    <div class="mfield" data-midi hidden data-midi-std style="display:flex;gap:8px">
+      <span style="flex:1"><label for="auMidiNum" id="auMidiNumLbl">Note number (0–127)</label>
+        <input type="text" id="auMidiNum" value="${esc(String(data.midi_num ?? 60))}"></span>
+      <span style="flex:1" id="auMidiValWrap"><label for="auMidiVal" id="auMidiValLbl">Velocity (0–127)</label>
+        <input type="text" id="auMidiVal" value="${esc(String(data.midi_val ?? 127))}"></span></div>
+    <div class="mfield" data-midi hidden data-midi-raw><label for="auMidiRaw">Hex bytes (e.g. MMC Play: F0 7F 7F 06 02 F7)</label>
+      <input type="text" id="auMidiRaw" placeholder="F0 7F 7F 06 02 F7" value="${esc(data.midi_raw || '')}"></div>
+    <div class="mfield" data-flash hidden><label for="auFlashText">Flash message</label>
+      <input type="text" id="auFlashText" placeholder="e.g. HOLD — STANDBY" value="${esc(data.flash_text || '')}"></div>
+    <div class="mfield" data-flash hidden style="display:flex;gap:8px">
+      <span style="flex:1"><label for="auFlashColor">Color</label>
+        <select id="auFlashColor">
+          ${Object.entries(FLASH_COLORS).map(([k, c]) =>
+            `<option value="${k}" ${(data.flash_color || 'danger') === k ? 'selected' : ''}>${c[0]}</option>`).join('')}
+          <option value="custom" ${okHex(data.flash_color) ? 'selected' : ''}>Custom…</option>
+        </select></span>
+      <span style="flex:0 0 auto" id="auFlashCustomWrap"><label for="auFlashCustom">&nbsp;</label>
+        <input type="color" id="auFlashCustom" value="${okHex(data.flash_color) || '#ff0000'}"
+               style="width:46px;height:34px;padding:2px;cursor:pointer"></span>
+      <span style="flex:0 0 auto"><label>&nbsp;</label>
+        <span id="auFlashSwatch" style="display:block;width:34px;height:34px;border-radius:6px;border:1px solid var(--line)"></span></span>
+      <span style="flex:1"><label for="auFlashSecs">Seconds</label>
+        <input type="text" id="auFlashSecs" value="${esc(String(data.flash_secs || 4))}"></span></div>
+    <button class="btn" id="auTest" type="button">Test now</button>
+    <div class="mnote mt-s" id="auTestNote"></div>`,
+    () => {
+      const v = { name: $('#auName').value.trim(),
+        trigger: $('#auTrig').value,
+        osc_pattern: $('#auPat').value.trim(),
+        phrase: $('#auPhrase').value.trim(),
+        channel: $('#auCh').value,
+        action: $('#auAction').value,
+        proto: $('#auProto').value,
+        host: $('#auHost').value.trim() || '127.0.0.1',
+        port: +($('#auPort').value || 8000),
+        address: $('#auAddr').value.trim() || '/',
+        args: $('#auArgs').value.trim(),
+        flash_text: $('#auFlashText').value.trim(),
+        flash_color: flashPick(),
+        flash_secs: +($('#auFlashSecs').value || 4) };
+      if (v.trigger === 'osc') {
+        if (!v.osc_pattern.startsWith('/')) { $('#auPat').focus(); return false; }
+      } else if (!v.phrase) { $('#auPhrase').focus(); return false; }
+      Object.assign(v, {
+        midi_port: $('#auMidiPort').value, midi_type: $('#auMidiType').value,
+        midi_channel: +($('#auMidiCh').value || 1), midi_num: +($('#auMidiNum').value || 0),
+        midi_val: $('#auMidiVal').value === '' ? 127 : +$('#auMidiVal').value,
+        midi_raw: $('#auMidiRaw').value.trim() });
+      if (CONSOLES[v.action]) {
+        if (!$('#auHost').value.trim()) { $('#auHost').focus(); return false; }
+        const c = consoleRead(), b = CONSOLES[v.action].build(c);
+        Object.assign(v, { action: 'osc', proto: 'udp', address: b.address,
+                           args: b.args, console: c });
+      } else {
+        delete data.console;
+      }
+      Object.assign(data, v);
+      if (isNew) AUTOS.push(data);
+      saveAutos();
+    }, isNew ? 'Add' : 'Save');
+  const consoleRead = () => ({ type: $('#auAction').value, target: $('#cvTarget').value,
+    num: +($('#cvNum').value || 1), second: +($('#cvSecond').value || 1),
+    state: $('#cvState').value, scene: $('#cvScene').value.trim() || '1.00' });
+  let cvType = null;
+  const syncConsole = () => {
+    const C = CONSOLES[$('#auAction').value]; if (!C) return;
+    if (cvType !== $('#auAction').value) {         // (re)fill the Control menu
+      cvType = $('#auAction').value;
+      const want = cv.type === cvType ? cv.target : Object.keys(C.targets)[0];
+      $('#cvTarget').innerHTML = Object.entries(C.targets).map(([k, T]) =>
+        `<option value="${k}" ${k === want ? 'selected' : ''}>${T.label}</option>`).join('');
+      $('#cvHelp').textContent = C.help.replace(/\s+/g, ' ');
+      $('#auHostLbl').textContent = C.hostLabel;
+      const port = +$('#auPort').value;
+      if (!port || port === 8000 || Object.values(CONSOLES).some(o => o.port === port))
+        $('#auPort').value = C.port;
+      if ($('#auHost').value === '127.0.0.1') $('#auHost').value = '';
+    }
+    const T = C.targets[$('#cvTarget').value] || {};
+    $$('#mBody [data-cv-num]').forEach(el => el.hidden = !!(T.scene || T.fixed));
+    $$('#mBody [data-cv-state]').forEach(el => el.hidden = !!(T.scene || T.fixed || T.noState));
+    $$('#mBody [data-cv-second]').forEach(el => el.hidden = !T.second);
+    $$('#mBody [data-cv-scene]').forEach(el => el.hidden = !T.scene);
+    $('#cvNumLbl').textContent = T.second ? 'Input' : 'Number';
+    $('#cvSecondLbl').textContent = T.second || '';
+    const b = C.build(consoleRead());
+    $('#cvPreview').textContent = 'Sends: ' + b.address + (b.args ? ' ' + b.args : '');
+    $('#cvCheck').hidden = !b.check;
+    $('#cvCheck').textContent = C.checkNote;
+  };
+  ['#cvTarget', '#cvNum', '#cvSecond', '#cvState', '#cvScene'].forEach(id => {
+    $(id).addEventListener('input', syncConsole);
+    $(id).addEventListener('change', syncConsole);
+  });
+  const flashPick = () => $('#auFlashColor').value === 'custom'
+    ? $('#auFlashCustom').value : $('#auFlashColor').value;
+  const syncFlash = () => {
+    $('#auFlashCustomWrap').hidden = $('#auFlashColor').value !== 'custom';
+    $('#auFlashSwatch').style.background = flashColor(flashPick()).bg;
+  };
+  $('#auFlashColor').addEventListener('change', syncFlash);
+  $('#auFlashCustom').addEventListener('input', syncFlash);
+  syncFlash();
+  const syncAction = () => {
+    const act = $('#auAction').value;
+    const flash = act === 'flash', midi = act === 'midi', con = !!CONSOLES[act];
+    $$('#mBody [data-osc]').forEach(el => el.hidden = act !== 'osc');
+    $$('#mBody [data-host]').forEach(el => el.hidden = act !== 'osc' && !con);
+    $$('#mBody [data-console]').forEach(el => el.hidden = !con);
+    $$('#mBody [data-midi]').forEach(el => el.hidden = !midi);
+    $$('#mBody [data-flash]').forEach(el => el.hidden = !flash);
+    $$('#mBody [data-vars]').forEach(el => el.hidden = midi || con);
+    if (!con) { cvType = null; $('#auHostLbl').textContent = 'OSC host (IP)'; }
+    if (con) syncConsole();
+    if (midi) {
+      const t = $('#auMidiType').value;
+      $$('#mBody [data-midi-std]').forEach(el => el.hidden = t === 'raw');
+      $$('#mBody [data-midi-raw]').forEach(el => el.hidden = t !== 'raw');
+      $('#auMidiNumLbl').textContent = { note: 'Note number (0–127)',
+        cc: 'Controller number (0–127)', program: 'Program number (0–127)' }[t] || 'Number';
+      $('#auMidiValLbl').textContent = t === 'cc' ? 'Value (0–127)' : 'Velocity (0–127)';
+      $('#auMidiValWrap').hidden = t === 'program';
+    }
+    $('#auTest').textContent = flash ? 'Preview flash'
+      : midi ? 'Send test MIDI now' : 'Send test message now';
+    const osc = $('#auTrig').value === 'osc';
+    $$('#mBody [data-tphrase]').forEach(el => el.hidden = osc);
+    $$('#mBody [data-tosc]').forEach(el => el.hidden = !osc);
+  };
+  $('#auAction').onchange = $('#auTrig').onchange = $('#auMidiType').onchange = syncAction;
+  syncAction();
+  fillMidiPorts($('#auMidiPort'), data.midi_port || '');
+  $('#auTest').onclick = async () => {
+    if ($('#auAction').value === 'flash') {
+      showFlash($('#auFlashText').value.trim() || $('#auPhrase').value.trim(),
+                flashPick(), +($('#auFlashSecs').value || 4));
+      $('#auTestNote').textContent = 'Previewed on screen.';
+      return;
+    }
+    if ($('#auAction').value === 'midi') {
+      const mb = { midi_port: $('#auMidiPort').value,
+        midi_type: $('#auMidiType').value,
+        midi_channel: +($('#auMidiCh').value || 1),
+        midi_num: +($('#auMidiNum').value || 0),
+        midi_val: $('#auMidiVal').value === '' ? 127 : +$('#auMidiVal').value,
+        midi_raw: $('#auMidiRaw').value.trim() };
+      try {
+        const j = await (await fetch('/automations/midi-test', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(mb) })).json();
+        $('#auTestNote').textContent = j.ok ? 'Sent: ' + j.sent : 'Failed: ' + j.error;
+      } catch { $('#auTestNote').textContent = 'Failed to reach server.'; }
+      return;
+    }
+    let body = { host: $('#auHost').value.trim() || '127.0.0.1',
+      port: +($('#auPort').value || 8000),
+      address: $('#auAddr').value.trim() || '/test',
+      args: $('#auArgs').value.trim(), proto: $('#auProto').value };
+    if (CONSOLES[$('#auAction').value]) {
+      if (!$('#auHost').value.trim()) {
+        $('#auTestNote').textContent = 'Enter the console’s IP first.';
+        return;
+      }
+      const b = CONSOLES[$('#auAction').value].build(consoleRead());
+      body = Object.assign(body, { address: b.address, args: b.args, proto: 'udp' });
+    }
+    try {
+      const j = await (await fetch('/automations/test', { method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body) })).json();
+      $('#auTestNote').textContent = j.ok
+        ? `Sent (${body.proto === 'tcp' ? 'TCP' : 'UDP'} — check the receiving device).`
+        : 'Failed: ' + j.error;
+    } catch { $('#auTestNote').textContent = 'Failed to reach server.'; }
+  };
+  $('#auPhrase').focus();
+}
+$('#autoAdd').onclick = () => autoModal(null);
+
+async function initApp() {
+  try { APP_STATE = await (await fetch('/state')).json(); } catch { APP_STATE = {}; }
+  if (APP_STATE.version) $('#brandVer').textContent = 'v' + APP_STATE.version;
+  if (APP_STATE.readonly) {
+    // LAN viewer: watch-only. The server refuses config reads (roster,
+    // presets, automations, devices…) from other devices; /view gives just
+    // the speaker names, groups and colors needed to show the same tabs.
+    VIEWER = true;
+    document.body.classList.add('viewer');
+    const empty = $('#empty');
+    if (empty) empty.textContent = 'Watching — lines appear here as people talk.';
+    try { await loadLexicon(); } catch {}
+    try {
+      const v = await (await fetch('/view')).json();
+      groups = v.groups || [];
+      pins = v.pins || [];
+      people = Object.entries(v.channels || {}).map(([k, c]) => {
+        const [di, ch] = k.split(':').map(Number);
+        return { ...c, di, ch };
+      });
+      rebuildRoute();
+    } catch {}
+    const want = new URLSearchParams(location.search).get('tab');
+    if (want && groups.includes(want)) lockedTab = want;
+    setTab(lockedTab || 'all');
+    if (APP_STATE.running) setRunning(true);
+    connectWS();
+    return;
+  }
+  muted = new Set(APP_STATE.muted || []);
+  // Each step is guarded on its own: one failing request (e.g. a device-scan
+  // error) must not leave the app with no live feed and no presets.
+  const step = async (fn, what) => {
+    try { await fn(); } catch { showErr(`Couldn't load ${what} — some features may be unavailable.`); }
+  };
+  await step(safetyRestoreRoster, 'the saved roster');
+  await step(loadDevices, 'audio devices');
+  await step(loadLexicon, 'hot words');
+  await step(loadPresets, 'presets');
+  await step(loadAutomations, 'automations');
+  if (APP_STATE.running) {
+    setRunning(true);
+  } else if (APP_STATE.autostart !== false &&
+             APP_STATE.last_preset && presets[APP_STATE.last_preset]) {
+    applyPreset(APP_STATE.last_preset);
+    startCapture();
+  }
+  connectWS();
+}
+
+initApp();
+</script>
+</body>
+</html>
